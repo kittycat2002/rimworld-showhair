@@ -54,7 +54,7 @@ namespace ShowHair
                         p.equipment != null)
                     {
                         this.pawn = p;
-                        this.originalColor = p.story.hairColor;
+                        this.originalColor = p.story.HairColor;
                         foreach(ThingWithComps t in p.apparel.WornApparel)
                         {
                             if (t.def.apparel?.layers.Contains(ApparelLayerDefOf.Overhead) == true)
@@ -227,7 +227,7 @@ namespace ShowHair
                     Widgets.Label(new Rect(600f, y + 400, 75, 30), "ShowHair.HairColor".Translate());
                     if (Widgets.ButtonText(new Rect(680, y + 400, 50, 30), "ShowHair.WhiteHairColor".Translate()))
                     {
-                        this.pawn.story.hairColor = Color.white;
+                        this.pawn.story.HairColor = Color.white;
                         try
                         {
                             this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
@@ -240,7 +240,7 @@ namespace ShowHair
                     }
                     if (Widgets.ButtonText(new Rect(740, y + 400, 50, 30), "ShowHair.YellowHairColor".Translate()))
                     {
-                        this.pawn.story.hairColor = Color.yellow;
+                        this.pawn.story.HairColor = Color.yellow;
                         try
                         {
                             this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
@@ -253,7 +253,7 @@ namespace ShowHair
                     }
                     if (Widgets.ButtonText(new Rect(800, y + 400, 50, 30), "ShowHair.GreenHairColor".Translate()))
                     {
-                        this.pawn.story.hairColor = Color.green;
+                        this.pawn.story.HairColor = Color.green;
                         try
                         {
                             this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
@@ -316,7 +316,7 @@ namespace ShowHair
             Settings.OptionsOpen = false;
             if (this.pawn != null)
             {
-                this.pawn.story.hairColor = this.originalColor;
+                this.pawn.story.HairColor = this.originalColor;
                 if (this.spawnedHats?.Count > 0)
                 {
                     foreach(var h in this.spawnedHats.Values)

@@ -10,7 +10,7 @@ namespace ShowHair
 		public static int GetBottomPixelPercentage(Pawn pawn, string texPath, Rot4 rot)
 		{
 			//load the current hair mat
-			var material = GraphicDatabase.Get<Graphic_Multi>(texPath, ShaderDatabase.Cutout, Vector2.one, pawn.story.hairColor).MatAt(rot);
+			var material = GraphicDatabase.Get<Graphic_Multi>(texPath, ShaderDatabase.Cutout, Vector2.one, pawn.story.HairColor).MatAt(rot);
 
 			//get current hair texture
 			Texture2D hairTexture = getReadableTexture((Texture2D)material.mainTexture);

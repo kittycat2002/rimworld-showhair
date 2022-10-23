@@ -51,7 +51,7 @@ namespace ShowHair
 					if (texPath == null)
 						mat = null;
 					else
-						mat = GraphicDatabase.Get<Graphic_Multi>(texPath, ShaderDatabase.Cutout, Vector2.one, pawn.story.hairColor).MatAt(facing); // Set new graphic
+						mat = GraphicDatabase.Get<Graphic_Multi>(texPath, ShaderDatabase.Cutout, Vector2.one, pawn.story.HairColor).MatAt(facing); // Set new graphic
 				}
 				catch
                 {
