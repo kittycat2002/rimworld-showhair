@@ -142,7 +142,6 @@ namespace ShowHair
                 {
                     if (addCount++ == 1)
                     {
-                        Log.Message("a");
                         il[i].opcode = OpCodes.Ldarg_1;
                         il[i].operand = null;
                         yield return il[i];

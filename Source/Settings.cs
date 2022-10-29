@@ -32,59 +32,9 @@ namespace ShowHair
         {
             Settings.Initialize();
 
-<<<<<<< HEAD
             Widgets.CheckboxLabeled(new Rect(0, 60, 250, 22), "ShowHair.OnlyApplyToColonists".Translate(), ref Settings.OnlyApplyToColonists);
             Widgets.CheckboxLabeled(new Rect(0, 90, 250, 22), "ShowHair.HideAllHats".Translate(), ref Settings.HideAllHats);
             Widgets.CheckboxLabeled(new Rect(0, 120, 250, 22), "ShowHair.UseDontShaveHead".Translate(), ref Settings.UseDontShaveHead);
-=======
-            Settings.OptionsOpen = !this.putHatOnPawn;
-
-            if (Current.Game != null && this.pawn == null)
-            {
-                foreach (Pawn p in PawnsFinder.All_AliveOrDead)
-                {
-                    if (p.Faction != Faction.OfPlayer && 
-                        p.def.race.Humanlike && 
-                        !p.health.Downed &&
-                        p.equipment != null)
-                    {
-                        this.pawn = p;
-                        this.originalColor = p.story.HairColor;
-                        foreach(ThingWithComps t in p.apparel.WornApparel)
-                        {
-                            if (t.def.apparel?.layers.Contains(ApparelLayerDefOf.Overhead) == true)
-                            {
-                                this.pawnBackupHat = t;
-                                this.RemoveApparel(pawnBackupHat);
-                                try
-                                {
-                                    this.pawn.Drawer.renderer.graphics.SetAllGraphicsDirty();
-                                }
-                                catch
-                                {
-                                    Log.ErrorOnce(msgErrorDirty, msgErrorDirty.GetHashCode());
-                                }
-                                break;
-                            }
-                        }
-                        PortraitsCache.SetDirty(this.pawn);
-                        break;
-                    }
-                }
-            }
-            else if (Current.Game == null)
-            {
-                this.pawn = null;
-            }
-
-            float y = 60f;
-            Widgets.CheckboxLabeled(new Rect(0, y, 250, 22), "ShowHair.OnlyApplyToColonists".Translate(), ref Settings.OnlyApplyToColonists);
-            y += 30;
-            Widgets.CheckboxLabeled(new Rect(0, y, 250, 22), "ShowHair.HideAllHats".Translate(), ref Settings.HideAllHats);
-            y += 30;
-            Widgets.CheckboxLabeled(new Rect(0, y, 250, 22), "ShowHair.UseDontShaveHead".Translate(), ref Settings.UseDontShaveHead);
-            y += 30;
->>>>>>> 1124e66df14ee5b8fa086538c77d2affff4935ed
 
             if (!Settings.HideAllHats)
             {
@@ -109,91 +59,15 @@ namespace ShowHair
                     if (Widgets.ButtonText(new Rect(235, 180, 200, 22), label.Translate()))
                     {
                         Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>()
-{
-new FloatMenuOption("Off".Translate(), delegate() {Settings.Indoors = Indoors.ShowHats; }),
-new FloatMenuOption("ShowHair.HideHatsIndoors".Translate(), delegate() {Settings.Indoors = Indoors.HideHats; }),
-new FloatMenuOption("ShowHair.HideHatsIndoorsShowWhenDrafted".Translate(), delegate() {Settings.Indoors = Indoors.ShowHatsWhenDrafted; }),
-}));
+                        {
+                            new FloatMenuOption("Off".Translate(), delegate() {Settings.Indoors = Indoors.ShowHats; }),
+                            new FloatMenuOption("ShowHair.HideHatsIndoors".Translate(), delegate() {Settings.Indoors = Indoors.HideHats; }),
+                            new FloatMenuOption("ShowHair.HideHatsIndoorsShowWhenDrafted".Translate(), delegate() {Settings.Indoors = Indoors.ShowHatsWhenDrafted; }),
+                        }));
                     }
                 }
-
-<<<<<<< HEAD
                 DrawTableHats(0, 220, (float)Math.Floor(rect.width / 2) - 10, ref scrollPosition, ref previousHatY, "ShowHair.Hats", "ShowHair.HatsDesc", ref leftTableSearchBuffer, Settings.HatsThatHide.Keys, Settings.HatsThatHide, Settings.HatsRenderer);
                 DrawTableHair((float)Math.Floor(rect.width / 2) + 10, 220, rect.width - (float)Math.Floor(rect.width / 2) - 10, ref scrollPosition2, ref previousHairY, "ShowHair.HairThatWillBeHidden", "", ref rightTableSearchBuffer, Settings.HairToHide.Keys, Settings.HairToHide);
-=======
-                if (pawn != null)
-                {
-                    y -= 60;
-                    DrawPortraitWidget(630f, y + 150f);
-                    bool b = this.putHatOnPawn;
-                    Widgets.CheckboxLabeled(new Rect(650f, y + 350, 150, 30), "ShowHair.PutHatOnPawn".Translate(), ref this.putHatOnPawn);
-                    if (b != this.putHatOnPawn)
-                    {
-                        Stack<Apparel> toRemove = new Stack<Apparel>();
-                        foreach (Apparel a in this.pawn.apparel.WornApparel)
-                        {
-                            var layers = a.def.apparel?.layers;
-                            if (layers != null && (layers.Contains(ApparelLayerDefOf.Overhead)))
-                                toRemove.Push(a);
-                        }
-                        foreach (Apparel a in toRemove)
-                            this.pawn.apparel.Remove(a);
-                        try
-                        {
-                            this.pawn.Drawer.renderer.graphics.SetAllGraphicsDirty();
-                        }
-                        catch
-                        {
-                            Log.ErrorOnce(msgErrorDirty, msgErrorDirty.GetHashCode() + 2);
-                        }
-                        PortraitsCache.SetDirty(this.pawn);
-                    }
-                    Widgets.Label(new Rect(600f, y + 400, 75, 30), "ShowHair.HairColor".Translate());
-                    if (Widgets.ButtonText(new Rect(680, y + 400, 50, 30), "ShowHair.WhiteHairColor".Translate()))
-                    {
-                        this.pawn.story.HairColor = Color.white;
-                        try
-                        {
-                            this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
-                        }
-                        catch
-                        {
-                            Log.ErrorOnce(msgErrorDirty, msgErrorDirty.GetHashCode() + 5);
-                        }
-                        PortraitsCache.SetDirty(this.pawn);
-                    }
-                    if (Widgets.ButtonText(new Rect(740, y + 400, 50, 30), "ShowHair.YellowHairColor".Translate()))
-                    {
-                        this.pawn.story.HairColor = Color.yellow;
-                        try
-                        {
-                            this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
-                        }
-                        catch
-                        {
-                            Log.ErrorOnce(msgErrorDirty, msgErrorDirty.GetHashCode() + 6);
-                        }
-                        PortraitsCache.SetDirty(this.pawn);
-                    }
-                    if (Widgets.ButtonText(new Rect(800, y + 400, 50, 30), "ShowHair.GreenHairColor".Translate()))
-                    {
-                        this.pawn.story.HairColor = Color.green;
-                        try
-                        {
-                            this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
-                        }
-                        catch
-                        {
-                            Log.ErrorOnce(msgErrorDirty, msgErrorDirty.GetHashCode() + 7);
-                        }
-                        PortraitsCache.SetDirty(this.pawn);
-                    }
-                }
-                else
-                {
-                    Widgets.Label(new Rect(650f, y + 150f, 200, 30), "ShowHair.StartGameToSeePawn".Translate());
-                }
->>>>>>> 1124e66df14ee5b8fa086538c77d2affff4935ed
             }
         }
 
@@ -251,22 +125,10 @@ new FloatMenuOption("ShowHair.HideHatsIndoorsShowWhenDrafted".Translate(), deleg
                 innerY = index++ * ROW_HEIGHT;
 
                 Widgets.ThingIcon(new Rect(x, innerY - 2, ROW_HEIGHT - 2, ROW_HEIGHT - 2), t);
-
-<<<<<<< HEAD
                 Widgets.Label(new Rect(34, innerY, 184, ROW_HEIGHT), t.label + ":");
 
                 Text.Font = GameFont.Tiny;
                 if (Widgets.ButtonText(new Rect(width - 196, innerY, 90, 26), hideDict[t].ToString().Translate()))
-=======
-        public override void WriteSettings()
-        {
-            base.WriteSettings();
-            Settings.OptionsOpen = false;
-            if (this.pawn != null)
-            {
-                this.pawn.story.HairColor = this.originalColor;
-                if (this.spawnedHats?.Count > 0)
->>>>>>> 1124e66df14ee5b8fa086538c77d2affff4935ed
                 {
                     Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>() {
                         new FloatMenuOption(HatHideEnum.ShowsHair.ToString().Translate(), () =>
