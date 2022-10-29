@@ -92,21 +92,84 @@ namespace ShowHair
         }
     }*/
 
-   /* public class AAA
+    /* public class AAA
+     {
+         private void DrawHeadHair(Vector3 rootLoc, Vector3 headOffset, float angle, Rot4 bodyFacing, Rot4 headFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+         {
+             Vector3 onHeadLoc = rootLoc + headOffset;
+             onHeadLoc.y += 0.0289575271f;
+             List<ApparelGraphicRecord> apparelGraphics = null;
+             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
+             bool flag = false;
+             bool flag2 = bodyFacing == Rot4.North;
+             bool flag3 = flags.FlagSet(PawnRenderFlags.Headgear) && (!flags.FlagSet(PawnRenderFlags.Portrait) || !Prefs.HatsOnlyOnMap || flags.FlagSet(PawnRenderFlags.StylingStation));
+             Patch_PawnRenderer_DrawHeadHair.HideHats(ref flag, ref flag2, ref flag3, bodyFacing, this);
+         }
+     }*/
+    [HarmonyPatch()]
+    public static class Patch_PawnRenderer_DrawApparel
     {
-        private void DrawHeadHair(Vector3 rootLoc, Vector3 headOffset, float angle, Rot4 bodyFacing, Rot4 headFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
+        static MethodInfo TargetMethod()
         {
-            Vector3 onHeadLoc = rootLoc + headOffset;
-            onHeadLoc.y += 0.0289575271f;
-            List<ApparelGraphicRecord> apparelGraphics = null;
-            Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
-            bool flag = false;
-            bool flag2 = bodyFacing == Rot4.North;
-            bool flag3 = flags.FlagSet(PawnRenderFlags.Headgear) && (!flags.FlagSet(PawnRenderFlags.Portrait) || !Prefs.HatsOnlyOnMap || flags.FlagSet(PawnRenderFlags.StylingStation));
-            Patch_PawnRenderer_DrawHeadHair.HideHats(ref flag, ref flag2, ref flag3, bodyFacing, this);
+            return AccessTools.FindIncludingInnerTypes(typeof(PawnRenderer), (type) => AccessTools.FirstMethod(type, (method) => method.Name.Contains("g__DrawApparel") && method.ReturnType == typeof(void)));
         }
-    }*/
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            MethodInfo getHatRenderer1 =
+                        typeof(Patch_PawnRenderer_DrawApparel).GetMethod(
+                        nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer1), BindingFlags.Static | BindingFlags.Public);
+            MethodInfo getHatRenderer2 =
+                        typeof(Patch_PawnRenderer_DrawApparel).GetMethod(
+                        nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer2), BindingFlags.Static | BindingFlags.Public);
 
+            List<CodeInstruction> il = instructions.ToList();
+            int loadCount = 0, addCount = 0;
+            for (int i = 0; i < il.Count; ++i)
+            {
+                if (loadCount != 15 && il[i].opcode == OpCodes.Ldfld)
+                {
+                    if (loadCount++ == 14)
+                    {
+                        yield return il[i];
+                        yield return new CodeInstruction(OpCodes.Ldarg_1);
+                        yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
+                        yield return CodeInstruction.LoadField(typeof(Thing), "def");
+                        yield return new CodeInstruction(OpCodes.Call, getHatRenderer1);
+                        i++;
+                    }
+                }
+                else if (addCount != 2 && il[i].opcode == OpCodes.Add)
+                {
+                    if (addCount++ == 1)
+                    {
+                        Log.Message("a");
+                        il[i].opcode = OpCodes.Ldarg_1;
+                        il[i].operand = null;
+                        yield return il[i];
+                        yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
+                        yield return CodeInstruction.LoadField(typeof(Thing), "def");
+                        yield return new CodeInstruction(OpCodes.Call, getHatRenderer2);
+                        yield return new CodeInstruction(OpCodes.Add);
+                        i++;
+                    }
+                }
+                yield return il[i];
+            }
+        }
+        public static Vector3 GetHatRenderer1(Vector3 prevLayer, ThingDef hat)
+        {
+            prevLayer.y = GetHatRenderer2(prevLayer.y, hat);
+            return prevLayer;
+        }
+        public static float GetHatRenderer2(float prevLayer, ThingDef hat)
+        {
+            if (Settings.HatsRenderer.TryGetValue(hat, out var e) && e != HatRendererEnum.NormalRender)
+            {
+                prevLayer += 0.02f;
+            }
+            return prevLayer;
+        }
+    }
     [HarmonyPatch(typeof(PawnRenderer), "DrawHeadHair")]
     public static class Patch_PawnRenderer_DrawHeadHair
     {
@@ -142,7 +205,7 @@ namespace ShowHair
 #endif
 
             MethodInfo get_IdeologyActive = AccessTools.Property(typeof(ModsConfig), nameof(ModsConfig.IdeologyActive))?.GetGetMethod();
-            MethodInfo hideHats = 
+            MethodInfo hideHats =
                         typeof(Patch_PawnRenderer_DrawHeadHair).GetMethod(
                         nameof(Patch_PawnRenderer_DrawHeadHair.HideHats), BindingFlags.Static | BindingFlags.Public);
             MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), nameof(GenDraw.DrawMeshNowOrLater), new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) });
@@ -164,7 +227,7 @@ namespace ShowHair
                     il[i].operand = 2;
                     yield return il[i];
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 3);
-                    yield return new CodeInstruction(OpCodes.Ldloca_S, 4);
+                    yield return new CodeInstruction(OpCodes.Ldloca_S, 6);
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
                     yield return new CodeInstruction(OpCodes.Call, hideHats);
                     // Create the overridden instruction
@@ -199,7 +262,19 @@ namespace ShowHair
             GenDraw.DrawMeshNowOrLater(mesh, loc, quat, mat, drawNow);
         }
 
-        public static void HideHats(ref bool hideHair, ref bool hideBeard, ref bool showHat, Rot4 bodyFacing)
+        private static void DrawMeshNowOrLaterHat(Mesh mesh, Vector3 loc, Quaternion quat, Material mat, bool drawNow)
+        {
+            //Log.Warning($"DrawMeshNowOrLaterPatch {mat.name}");
+            if (!skipDontShaveHead && Settings.UseDontShaveHead && HairUtilityFactory.GetHairUtility().TryGetCustomHairMat(pawn, headFacing, out Material m))
+            {
+                mat = m;
+                //Log.Warning($"-UseDontShaveHead {mat.name}");
+            }
+            loc.y += 0.1f; 
+            GenDraw.DrawMeshNowOrLater(mesh, loc, quat, mat, drawNow);
+        }
+
+        public static void HideHats(ref bool showHair, ref bool showBeard, ref bool showHat, Rot4 bodyFacing)
         {
             try
             {
@@ -208,28 +283,28 @@ namespace ShowHair
                 if (flags.FlagSet(PawnRenderFlags.Portrait) && Prefs.HatsOnlyOnMap)
                 {
                     showHat = false;
-                    hideHair = false;
-                    hideBeard = false;
+                    showHair = true;
+                    showBeard = true;
                     //Log.Error($"0 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                     return;
                 }
 
-                if (showHat == false ||
-                    Settings.OnlyApplyToColonists && FactionUtility.IsPlayerSafe(pawn.Faction) == false && !Settings.OptionsOpen)
+                if (!showHat ||
+                    Settings.OnlyApplyToColonists && !FactionUtility.IsPlayerSafe(pawn.Faction) && !Settings.OptionsOpen)
                 {
                     //Log.Error($"1 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                     return;
                 }
 
-                if (hideHair == false && showHat == false)
+                if (showHair && !showHat)
                 {
-                    CheckHideHat(ref hideHair, ref hideBeard, ref showHat, false);
+                    CheckHideHat(ref showHair, ref showBeard, ref showHat, false);
                     //Log.Error($"2 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                     return;
                 }
 
-                hideHair = false;
-                hideBeard = false;
+                showHair = true;
+                showBeard = true;
 
                 if (Settings.HideAllHats)
                 {
@@ -243,16 +318,16 @@ namespace ShowHair
                     showHat = isDrafted;
                     //Log.Error($"4.a {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                 }
-                else if (showHat && 
-                        (Settings.Indoors == Indoors.HideHats || 
+                else if (showHat &&
+                        (Settings.Indoors == Indoors.HideHats ||
                          (Settings.Indoors == Indoors.ShowHatsWhenDrafted && !isDrafted)))
                 {
                     CompCeilingDetect comp = pawn.GetComp<CompCeilingDetect>();
                     if (comp != null && comp.IsIndoors)
                     {
                         showHat = false;
-                        hideHair = false;
-                        hideBeard = false;
+                        showHair = true;
+                        showBeard = true;
                         return;
                         //Log.Error($"4.b {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                     }
@@ -260,25 +335,25 @@ namespace ShowHair
 
                 if (pawn.story?.hairDef != null && Settings.HairToHide.TryGetValue(pawn.story.hairDef, out bool hide) && hide)
                 {
-                    hideHair = true;
-                    hideBeard = true;
+                    showHair = false;
+                    showBeard = false;
                     showHat = true;
                     //Log.Error($"5 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
                     return;
                 }
 
-                CheckHideHat(ref hideHair, ref hideBeard, ref showHat, false);
+                CheckHideHat(ref showHair, ref showBeard, ref showHat, false);
             }
             finally
             {
-                if (!hideBeard)
-                    hideBeard = bodyFacing == Rot4.North;
+                if (showBeard)
+                    showBeard = bodyFacing != Rot4.North;
                 skipDontShaveHead = !showHat;
             }
             //Log.Error($"Final {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
         }
 
-        private static void CheckHideHat(ref bool hideHair, ref bool hideBeard, ref bool showHat, bool draftCheckOnly)
+        private static void CheckHideHat(ref bool showHair, ref bool showBeard, ref bool showHat, bool draftCheckOnly)
         {
             Apparel apparel;
             for (int j = 0; j < apparelGraphics?.Count; j++)
@@ -289,29 +364,29 @@ namespace ShowHair
                     //Log.Error("Last Layer " + def.defName);
                     if (Settings.HatsThatHide.TryGetValue(apparel.def, out var e) && e != HatHideEnum.ShowsHair)
                     {
-                        switch(e)
+                        switch (e)
                         {
                             case HatHideEnum.HidesAllHair:
                                 if (!draftCheckOnly)
                                 {
-                                    hideHair = true;
-                                    hideBeard = true;
+                                    showHair = false;
+                                    showBeard = false;
                                     showHat = true;
                                 }
                                 break;
                             case HatHideEnum.HidesHairShowBeard:
                                 if (!draftCheckOnly)
                                 {
-                                    hideHair = true;
-                                    hideBeard = false;
+                                    showHair = false;
+                                    showBeard = true;
                                     showHat = true;
                                 }
                                 break;
                             case HatHideEnum.HideHat:
                                 if (!draftCheckOnly)
                                 {
-                                    hideHair = false;
-                                    hideBeard = false;
+                                    showHair = true;
+                                    showBeard = true;
                                     showHat = false;
                                 }
                                 break;
@@ -320,24 +395,24 @@ namespace ShowHair
                                 {
                                     if (e == HatHideEnum.OnlyDraftHH)
                                     {
-                                        hideHair = true;
-                                        hideBeard = true;
+                                        showHair = false;
+                                        showBeard = false;
                                     }
                                     else if (e == HatHideEnum.OnlyDraftHHSB)
                                     {
-                                        hideHair = true;
-                                        hideBeard = false;
+                                        showHair = false;
+                                        showBeard = true;
                                     }
                                     else
                                     {
-                                        hideHair = false;
+                                        showHair = true;
                                     }
                                     showHat = true;
                                 }
                                 else
                                 {
-                                    hideHair = false;
-                                    showHat = false;
+                                    showHair = true;
+                                    showHat = true;
                                 }
                                 break;
                         }
