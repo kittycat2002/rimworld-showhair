@@ -109,34 +109,30 @@ namespace ShowHair
     [HarmonyPatch()]
     public static class Patch_PawnRenderer_DrawApparel
     {
+        private static Type type;
         static MethodInfo TargetMethod()
         {
-            return AccessTools.FindIncludingInnerTypes(typeof(PawnRenderer), (type) => AccessTools.FirstMethod(type, (method) => method.Name.Contains("g__DrawApparel") && method.ReturnType == typeof(void)));
+            var drawMethod = AccessTools.FindIncludingInnerTypes(typeof(PawnRenderer), (type) => AccessTools.FirstMethod(type, (method) => method.Name.Contains("g__DrawApparel") && method.ReturnType == typeof(void)));
+            type = drawMethod.DeclaringType;
+            return drawMethod;
         }
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            MethodInfo getHatRenderer1 =
-                        typeof(Patch_PawnRenderer_DrawApparel).GetMethod(
-                        nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer1), BindingFlags.Static | BindingFlags.Public);
-            MethodInfo getHatRenderer2 =
-                        typeof(Patch_PawnRenderer_DrawApparel).GetMethod(
-                        nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer2), BindingFlags.Static | BindingFlags.Public);
 
             List<CodeInstruction> il = instructions.ToList();
-            int loadCount = 0, addCount = 0;
+            FieldInfo onHeadLoc = AccessTools.Field(type, "onHeadLoc");
+            int addCount = 0;
+            bool loadFound = false;
             for (int i = 0; i < il.Count; ++i)
             {
-                if (loadCount != 15 && il[i].opcode == OpCodes.Ldfld)
+                if (!loadFound && il[i].opcode == OpCodes.Ldfld && il[i].OperandIs(onHeadLoc))
                 {
-                    if (loadCount++ == 14)
-                    {
-                        yield return il[i];
-                        yield return new CodeInstruction(OpCodes.Ldarg_1);
-                        yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
-                        yield return CodeInstruction.LoadField(typeof(Thing), "def");
-                        yield return new CodeInstruction(OpCodes.Call, getHatRenderer1);
-                        i++;
-                    }
+                    yield return il[i];
+                    yield return new CodeInstruction(OpCodes.Ldarg_1);
+                    yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
+                    yield return CodeInstruction.LoadField(typeof(Thing), "def");
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_PawnRenderer_DrawApparel), nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer1)));
+                    i++;
                 }
                 else if (addCount != 2 && il[i].opcode == OpCodes.Add)
                 {
@@ -147,7 +143,7 @@ namespace ShowHair
                         yield return il[i];
                         yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
                         yield return CodeInstruction.LoadField(typeof(Thing), "def");
-                        yield return new CodeInstruction(OpCodes.Call, getHatRenderer2);
+                        yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_PawnRenderer_DrawApparel), nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer2)));
                         yield return new CodeInstruction(OpCodes.Add);
                         i++;
                     }
