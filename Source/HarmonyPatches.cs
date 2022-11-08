@@ -121,46 +121,27 @@ namespace ShowHair
 
             List<CodeInstruction> il = instructions.ToList();
             FieldInfo onHeadLoc = AccessTools.Field(type, "onHeadLoc");
-            int addCount = 0;
             bool loadFound = false;
             for (int i = 0; i < il.Count; ++i)
             {
                 if (!loadFound && il[i].opcode == OpCodes.Ldfld && il[i].OperandIs(onHeadLoc))
                 {
+                    loadFound = true;
                     yield return il[i];
                     yield return new CodeInstruction(OpCodes.Ldarg_1);
                     yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
                     yield return CodeInstruction.LoadField(typeof(Thing), "def");
-                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_PawnRenderer_DrawApparel), nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer1)));
+                    yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_PawnRenderer_DrawApparel), nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer)));
                     i++;
-                }
-                else if (addCount != 2 && il[i].opcode == OpCodes.Add)
-                {
-                    if (addCount++ == 1)
-                    {
-                        il[i].opcode = OpCodes.Ldarg_1;
-                        il[i].operand = null;
-                        yield return il[i];
-                        yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
-                        yield return CodeInstruction.LoadField(typeof(Thing), "def");
-                        yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_PawnRenderer_DrawApparel), nameof(Patch_PawnRenderer_DrawApparel.GetHatRenderer2)));
-                        yield return new CodeInstruction(OpCodes.Add);
-                        i++;
-                    }
                 }
                 yield return il[i];
             }
         }
-        public static Vector3 GetHatRenderer1(Vector3 prevLayer, ThingDef hat)
-        {
-            prevLayer.y = GetHatRenderer2(prevLayer.y, hat);
-            return prevLayer;
-        }
-        public static float GetHatRenderer2(float prevLayer, ThingDef hat)
+        public static Vector3 GetHatRenderer(Vector3 prevLayer, ThingDef hat)
         {
             if (Settings.HatsRenderer.TryGetValue(hat, out var e) && e != HatRendererEnum.NormalRender)
             {
-                prevLayer += 0.02f;
+                prevLayer.y += 0.002f;
             }
             return prevLayer;
         }
@@ -342,7 +323,7 @@ namespace ShowHair
             finally
             {
                 if (showBeard)
-                    showBeard = bodyFacing != Rot4.North;
+                    showBeard = bodyFacing != Rot4.North && pawn.style.beardDef != BeardDefOf.NoBeard;
                 skipDontShaveHead = !showHat;
             }
             //Log.Error($"Final {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
