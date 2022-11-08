@@ -204,6 +204,7 @@ namespace ShowHair
                     yield return il[i];
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 3);
                     yield return new CodeInstruction(OpCodes.Ldloca_S, 6);
+                    yield return new CodeInstruction(OpCodes.Ldloc_S, 4);
                     yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
                     yield return new CodeInstruction(OpCodes.Call, hideHats);
                     // Create the overridden instruction
@@ -250,8 +251,10 @@ namespace ShowHair
             GenDraw.DrawMeshNowOrLater(mesh, loc, quat, mat, drawNow);
         }
 
-        public static void HideHats(ref bool showHair, ref bool showBeard, ref bool showHat, Rot4 bodyFacing)
+        public static void HideHats(ref bool showHair, ref bool showBeard, ref bool showHat, bool inBed, Rot4 bodyFacing)
         {
+            if (inBed)
+                return;
             try
             {
                 //Log.Error($"Start {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
