@@ -255,7 +255,6 @@ namespace ShowHair
                 {
                     if (!Settings.HatDict.TryGetValue(apparel.def,out HatSaver hat))
                         return HatEnum.HideHat;
-                    Log.Message($"hatDef: {hat.defName}, hatHide: {hat.hatHide}, draftedHide: {hat.draftedHide}, indoorsHide: {hat.indoorsHide}, bedHide: {hat.bedHide}, hatRenderer: {hat.hatRenderer}");
                     if (isDrafted && hat.draftedHide != HatStateEnum.Default)
                     {
                         return (HatEnum)(hat.draftedHide - 1);
