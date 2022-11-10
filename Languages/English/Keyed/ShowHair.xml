@@ -1,39 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
 	<ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
-	<ShowHair.HideAllHats>Hide All Hats</ShowHair.HideAllHats>
-	<ShowHair.ShowHatsOnlyWhenDrafted>Show Hats Only When Drafted</ShowHair.ShowHatsOnlyWhenDrafted>
 	<ShowHair.OnlyApplyToColonists>Only Apply to Colonists</ShowHair.OnlyApplyToColonists>
-	<ShowHair.UpdatePortrait>Update Portrait (may decrease FPS)</ShowHair.UpdatePortrait>
-	<ShowHair.ShowHatsUnderNaturalRoof>Hide Hats Under Natural Roof</ShowHair.ShowHatsUnderNaturalRoof>
-	<ShowHair.PutHatOnPawn>Put hat on pawn</ShowHair.PutHatOnPawn>
-	<ShowHair.StartGameToSeePawn>Start game to see pawn</ShowHair.StartGameToSeePawn>
-	<ShowHair.HairColor>Hair Color</ShowHair.HairColor>
-	<ShowHair.WhiteHairColor>W</ShowHair.WhiteHairColor>
-	<ShowHair.YellowHairColor>Y</ShowHair.YellowHairColor>
-	<ShowHair.GreenHairColor>G</ShowHair.GreenHairColor>
-
-	<!-- 1.3 -->
 	<ShowHair.Hats>Hats</ShowHair.Hats>
-	<ShowHair.HatsDesc>HH = Hide Hair | SH = Show Hair | SB = Show Beard</ShowHair.HatsDesc>
+	<ShowHair.DefaultMode>Default</ShowHair.DefaultMode>
+	<ShowHair.DraftedMode>Drafted</ShowHair.DraftedMode>
+	<ShowHair.IndoorsMode>Indoors</ShowHair.IndoorsMode>
+	<ShowHair.BedMode>In Bed</ShowHair.BedMode>
+	<ShowHair.RenderMode>Hats</ShowHair.RenderMode>
 	<ShowsHair>Show Hair</ShowsHair>
 	<HideHat>Hide Hat</HideHat>
 	<HidesAllHair>Hide All Hair</HidesAllHair>
-	<HidesHairShowBeard>HH SB</HidesHairShowBeard>
-	<OnlyDraftSH>Only Drafted SH</OnlyDraftSH>
-	<OnlyDraftHH>Only Drafted HH</OnlyDraftHH>
-	<OnlyDraftHHSB>Only Drafted HH SB</OnlyDraftHHSB>
+	<HidesHairShowBeard>Hide Hair, Show Beard</HidesHairShowBeard>
+	<ShowsHairHidesBeard>Show Hair, Hide Beard</ShowsHairHidesBeard>
 	<NormalRender>Normal</NormalRender>
 	<ForceOverHair>Force Over Hair</ForceOverHair>
 	<ShowHair.HairThatWillBeHidden>Hair That Hats Will Hide</ShowHair.HairThatWillBeHidden>
-	<ShowHair.HideHatsIndoors>Hide Hats Indoors</ShowHair.HideHatsIndoors>
-	<ShowHair.HideHatsIndoorsShowWhenDrafted>Show Hats When Drafted</ShowHair.HideHatsIndoorsShowWhenDrafted>
 	<ShowHair.UseDontShaveHead>Use "Don't Shave Your Hair" hairs</ShowHair.UseDontShaveHead>
-
-	<ShowHair.SetAll>Set All</ShowHair.SetAll>
-	<ShowHair.SetFiltered>Set Filtered</ShowHair.SetFiltered>
-
-	<!-- 1.2 and older -->
-	<ShowHair.SelectHatsWhichHideHair>Select hats that will hide hair</ShowHair.SelectHatsWhichHideHair>
-	<ShowHair.SelectHairThatWillBeHidden>Select hair that hats will hide</ShowHair.SelectHairThatWillBeHidden>
 </LanguageData>

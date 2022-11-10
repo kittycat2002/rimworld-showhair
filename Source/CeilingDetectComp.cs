@@ -22,22 +22,22 @@ namespace ShowHair
             Pawn pawn = base.parent as Pawn;
             Map map = pawn?.Map;
 
-            if (Settings.OnlyApplyToColonists && pawn.Faction?.IsPlayer == false)
+            if (!Settings.CheckIndoors || Settings.OnlyApplyToColonists && pawn.Faction?.IsPlayer == false)
                 return;
 
-            if (map != null && Settings.Indoors != Indoors.ShowHats && pawn.RaceProps?.Humanlike == true && !pawn.Dead)
+            if (map != null && pawn.RaceProps?.Humanlike == true && !pawn.Dead)
             {
-                if (this.isIndoors == null)
+                if (isIndoors == null)
                 {
-                    this.isIndoors = DetermineIsIndoors(pawn, map);
+                    isIndoors = DetermineIsIndoors(pawn, map);
                     PortraitsCache.SetDirty(pawn);
                     GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(pawn);
                     return;
                 }
 
-                bool orig = this.isIndoors.Value;
-                this.isIndoors = this.DetermineIsIndoors(pawn, map);
-                if (orig != this.isIndoors.Value)
+                bool orig = isIndoors.Value;
+                this.isIndoors = DetermineIsIndoors(pawn, map);
+                if (orig != isIndoors.Value)
                 {
                     PortraitsCache.SetDirty(pawn);
                     GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(pawn);

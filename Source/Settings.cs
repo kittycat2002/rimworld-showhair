@@ -1,13 +1,61 @@
 ﻿using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
 namespace ShowHair
 {
+    public class HatSaver : IExposable
+    {
+        public string defName;
+        public string label;
+        public HatEnum hatHide;
+        public HatStateEnum draftedHide;
+        public HatStateEnum indoorsHide;
+        public HatStateEnum bedHide;
+        public HatRendererEnum hatRenderer;
+        public HatSaver()
+        {
+        }
+        public HatSaver(ThingDef hatDef)
+        {
+            defName = hatDef.defName;
+            label = hatDef.label;
+        }
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref defName, "defName");
+            Scribe_Values.Look(ref hatHide, "hideHat", HatEnum.HideHat);
+            Scribe_Values.Look(ref draftedHide, "hideDrafted", HatStateEnum.Default);
+            Scribe_Values.Look(ref indoorsHide, "hideIndoors", HatStateEnum.Default);
+            Scribe_Values.Look(ref bedHide, "hideBed", HatStateEnum.Default);
+            Scribe_Values.Look(ref hatRenderer, "hatRenderer", HatRendererEnum.ForceOverHair);
+        }
+    }
+    public class HairSaver : IExposable
+    {
+        public string defName;
+        public string label;
+        public bool forceHide;
+        public HairSaver()
+        {
+        }
+        public HairSaver(HairDef hairDef)
+        {
+            defName = hairDef.defName;
+            label = hairDef.label;
+        }
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref defName, "defName");
+            Scribe_Values.Look(ref forceHide, "forceHide", false);
+        }
+    }
     public class SettingsController : Mod
     {
+
         private Settings Settings;
 
         private Vector2 scrollPosition = new Vector2(0, 0);
@@ -17,7 +65,7 @@ namespace ShowHair
 
         public SettingsController(ModContentPack content) : base(content)
         {
-            Settings = base.GetSettings<Settings>();
+            Settings = GetSettings<Settings>();
 
             HairUtilityFactory.GetHairUtility();
         }
@@ -32,128 +80,80 @@ namespace ShowHair
             Settings.Initialize();
 
             Widgets.CheckboxLabeled(new Rect(0, 60, 250, 22), "ShowHair.OnlyApplyToColonists".Translate(), ref Settings.OnlyApplyToColonists);
-            Widgets.CheckboxLabeled(new Rect(0, 90, 250, 22), "ShowHair.HideAllHats".Translate(), ref Settings.HideAllHats);
-            Widgets.CheckboxLabeled(new Rect(0, 120, 250, 22), "ShowHair.UseDontShaveHead".Translate(), ref Settings.UseDontShaveHead);
-
-            if (!Settings.HideAllHats)
-            {
-                Widgets.CheckboxLabeled(new Rect(0, 150, 250, 22), "ShowHair.ShowHatsOnlyWhenDrafted".Translate(), ref Settings.ShowHatsOnlyWhenDrafted);
-
-                if (!Settings.ShowHatsOnlyWhenDrafted)
-                {
-                    Widgets.Label(new Rect(0, 180, 225, 22), "ShowHair.HideHatsIndoors".Translate());
-                    string label;
-                    switch (Settings.Indoors)
-                    {
-                        case Indoors.ShowHats:
-                            label = "Off";
-                            break;
-                        case Indoors.HideHats:
-                            label = "ShowHair.HideHatsIndoors";
-                            break;
-                        default:
-                            label = "ShowHair.HideHatsIndoorsShowWhenDrafted";
-                            break;
-                    }
-                    if (Widgets.ButtonText(new Rect(235, 180, 200, 22), label.Translate()))
-                    {
-                        Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>()
-                        {
-                            new FloatMenuOption("Off".Translate(), delegate() {Settings.Indoors = Indoors.ShowHats; }),
-                            new FloatMenuOption("ShowHair.HideHatsIndoors".Translate(), delegate() {Settings.Indoors = Indoors.HideHats; }),
-                            new FloatMenuOption("ShowHair.HideHatsIndoorsShowWhenDrafted".Translate(), delegate() {Settings.Indoors = Indoors.ShowHatsWhenDrafted; }),
-                        }));
-                    }
-                }
-                DrawTableHats(0, 220, (float)Math.Floor(rect.width / 2) - 10, ref scrollPosition, ref previousHatY, "ShowHair.Hats", "ShowHair.HatsDesc", ref leftTableSearchBuffer, Settings.HatsThatHide.Keys, Settings.HatsThatHide, Settings.HatsRenderer);
-                DrawTableHair((float)Math.Floor(rect.width / 2) + 10, 220, rect.width - (float)Math.Floor(rect.width / 2) - 10, ref scrollPosition2, ref previousHairY, "ShowHair.HairThatWillBeHidden", "", ref rightTableSearchBuffer, Settings.HairToHide.Keys, Settings.HairToHide);
-            }
+            Widgets.CheckboxLabeled(new Rect(0, 90, 250, 22), "ShowHair.UseDontShaveHead".Translate(), ref Settings.UseDontShaveHead);
+            float split = (float)Math.Floor(rect.width / 3 * 2);
+            DrawTableHats(0, 220, split - 10, ref scrollPosition, ref previousHatY, "ShowHair.Hats", ref leftTableSearchBuffer);
+            DrawTableHair(split + 10, 220, rect.width - split - 10, ref scrollPosition2, ref previousHairY, "ShowHair.HairThatWillBeHidden", ref rightTableSearchBuffer);
         }
 
-        private void DrawTableHats<T>(float x, float y, float width, ref Vector2 scroll, ref float innerY, string header, string headerDesc, ref string searchBuffer, ICollection<T> labels, Dictionary<T, HatHideEnum> hideDict, Dictionary<T, HatRendererEnum> rendererDict) where T : ThingDef
+        private void DrawTableHats(float x, float y, float width, ref Vector2 scroll, ref float innerY, string header, ref string searchBuffer)
         {
             Text.Font = GameFont.Small;
             const float ROW_HEIGHT = 32;
             GUI.BeginGroup(new Rect(x, y, width, 400));
-            Widgets.Label(new Rect(0, 0, width - 200, 20), header.Translate());
-            if (Widgets.ButtonText(new Rect(width - 200, 0, 100, 24), ((searchBuffer != "") ? "ShowHair.SetFiltered" : "ShowHair.SetAll").Translate()))
-            {
-                string sb = searchBuffer;
-                Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>() {
-                    new FloatMenuOption(HatHideEnum.ShowsHair.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.ShowsHair); }),
-                    new FloatMenuOption(HatHideEnum.HideHat.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.HideHat); }),
-                    new FloatMenuOption(HatHideEnum.HidesAllHair.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.HidesAllHair); }),
-                    new FloatMenuOption(HatHideEnum.HidesHairShowBeard.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.HidesHairShowBeard); }),
-                    new FloatMenuOption(HatHideEnum.OnlyDraftSH.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.OnlyDraftSH); }),
-                    new FloatMenuOption(HatHideEnum.OnlyDraftHH.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.OnlyDraftHH); }),
-                    new FloatMenuOption(HatHideEnum.OnlyDraftHHSB.ToString().Translate(), () =>
-                    { this.SetHatHideEnum(sb, hideDict, HatHideEnum.OnlyDraftHHSB); })
-                }));
-            }
-            if (Widgets.ButtonText(new Rect(width - 100, 0, 100, 24), ((searchBuffer != "") ? "ShowHair.SetFiltered" : "ShowHair.SetAll").Translate()))
-            {
-                string sb = searchBuffer;
-                Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>() {
-                    new FloatMenuOption(HatRendererEnum.NormalRender.ToString().Translate(), () =>
-                    { this.SetHatRendererEnum(sb, rendererDict, HatRendererEnum.ForceOverHair); }),
-                    new FloatMenuOption(HatRendererEnum.ForceOverHair.ToString().Translate(), () =>
-                    { this.SetHatRendererEnum(sb, rendererDict, HatRendererEnum.ForceOverHair); })
-                }));
-            }
-            Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(0, 20, width - 65, 20), headerDesc.Translate());
-            Text.Font = GameFont.Small;
-            searchBuffer = Widgets.TextArea(new Rect(0, 40, 200, 28), searchBuffer);
-            if (Widgets.ButtonText(new Rect(200, 40, 28, 28), "X"))
+            Widgets.Label(new Rect(0, 0, width, 20), header.Translate());
+            searchBuffer = Widgets.TextArea(new Rect(0, 24, 200, 28), searchBuffer);
+            if (Widgets.ButtonText(new Rect(200, 24, 28, 28), "X"))
                 searchBuffer = "";
+            if (Widgets.ButtonText(new Rect(width - 316, 28, 60, 24), "ShowHair.DefaultMode".Translate()))
+            {
+                string sb = searchBuffer;
+                Find.WindowStack.Add(FloatMenuGenerator(typeof(HatEnum), (i) => { SetHatHide(sb, (HatEnum)i); }));
+            }
+            if (Widgets.ButtonText(new Rect(width - 256, 28, 60, 24), "ShowHair.DraftedMode".Translate()))
+            {
+                string sb = searchBuffer;
+                Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { SetDraftedHide(sb, (HatStateEnum)i); }));
+            }
+            if (Widgets.ButtonText(new Rect(width - 196, 28, 60, 24), "ShowHair.IndoorsMode".Translate()))
+            {
+                string sb = searchBuffer;
+                Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { SetIndoorsHide(sb, (HatStateEnum)i); }));
+            }
+            if (Widgets.ButtonText(new Rect(width - 136, 28, 60, 24), "ShowHair.BedMode".Translate()))
+            {
+                string sb = searchBuffer;
+                Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { SetBedHide(sb, (HatStateEnum)i); }));
+            }
+            if (Widgets.ButtonText(new Rect(width - 76, 28, 60, 24), "ShowHair.RenderMode".Translate()))
+            {
+                string sb = searchBuffer;
+                Find.WindowStack.Add(FloatMenuGenerator(typeof(HatRendererEnum), (i) => { SetHatRenderer(sb, (HatRendererEnum)i); }));
+            }
             Widgets.BeginScrollView(new Rect(0, 75, width, 300), ref scroll, new Rect(0, 0, width - 16, innerY));
 
             innerY = 0;
             int index = 0;
-            foreach (T t in labels)
+            foreach (HatSaver t in Settings.HatDict.Values)
             {
-                if (!MatchesSearch(searchBuffer, t))
+                if (searchBuffer != "" && !MatchesSearch(searchBuffer, t))
                     continue;
 
                 innerY = index++ * ROW_HEIGHT;
 
-                Widgets.ThingIcon(new Rect(x, innerY - 2, ROW_HEIGHT - 2, ROW_HEIGHT - 2), t);
+                Widgets.ThingIcon(new Rect(x, innerY - 2, ROW_HEIGHT - 2, ROW_HEIGHT - 2), DefDatabase<ThingDef>.GetNamed(t.defName));
                 Widgets.Label(new Rect(34, innerY, 184, ROW_HEIGHT), t.label + ":");
 
                 Text.Font = GameFont.Tiny;
-                if (Widgets.ButtonText(new Rect(width - 196, innerY, 90, 26), hideDict[t].ToString().Translate()))
+                if (Widgets.ButtonText(new Rect(width - 316, innerY, 60, 26), t.hatHide.ToString().Translate()))
                 {
-                    Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>() {
-                        new FloatMenuOption(HatHideEnum.ShowsHair.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.ShowsHair; }),
-                        new FloatMenuOption(HatHideEnum.HideHat.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.HideHat; }),
-                        new FloatMenuOption(HatHideEnum.HidesAllHair.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.HidesAllHair; }),
-                        new FloatMenuOption(HatHideEnum.HidesHairShowBeard.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.HidesHairShowBeard; }),
-                        new FloatMenuOption(HatHideEnum.OnlyDraftSH.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.OnlyDraftSH; }),
-                        new FloatMenuOption(HatHideEnum.OnlyDraftHH.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.OnlyDraftHH; }),
-                        new FloatMenuOption(HatHideEnum.OnlyDraftHHSB.ToString().Translate(), () =>
-                        { hideDict[t] = HatHideEnum.OnlyDraftHHSB; })
-                    }));
+                    Find.WindowStack.Add(FloatMenuGenerator(typeof(HatEnum), (i) => { t.hatHide = (HatEnum)i; }));
                 }
-                if (Widgets.ButtonText(new Rect(width - 106, innerY, 90, 26), rendererDict[t].ToString().Translate()))
+                if (Widgets.ButtonText(new Rect(width - 256, innerY, 60, 26), t.draftedHide.ToString().Translate()))
                 {
-                    Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>() {
-                        new FloatMenuOption(HatRendererEnum.NormalRender.ToString().Translate(), () =>
-                        { rendererDict[t] = HatRendererEnum.NormalRender; }),
-                        new FloatMenuOption(HatRendererEnum.ForceOverHair.ToString().Translate(), () =>
-                        { rendererDict[t] = HatRendererEnum.ForceOverHair; })
-                    }));
+                    Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { t.draftedHide = (HatStateEnum)i; }));
+                }
+                if (Widgets.ButtonText(new Rect(width - 196, innerY, 60, 26), t.indoorsHide.ToString().Translate()))
+                {
+                    Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { t.indoorsHide = (HatStateEnum)i; }));
+                }
+                if (Widgets.ButtonText(new Rect(width - 136, innerY, 60, 26), t.bedHide.ToString().Translate()))
+                {
+                    Find.WindowStack.Add(FloatMenuGenerator(typeof(HatStateEnum), (i) => { t.bedHide = (HatStateEnum)i; }));
+                }
+                if (Widgets.ButtonText(new Rect(width - 76, innerY, 60, 26), t.hatRenderer.ToString().Translate()))
+                {
+                    Find.WindowStack.Add(FloatMenuGenerator(typeof(HatRendererEnum), (i) => { t.hatRenderer = (HatRendererEnum)i; }));
                 }
                 Text.Font = GameFont.Small;
 
@@ -164,115 +164,141 @@ namespace ShowHair
             innerY += ROW_HEIGHT;
         }
 
-        private void DrawTableHair<T>(float x, float y, float width, ref Vector2 scroll, ref float innerY, string header, string headerDesc, ref string searchBuffer, ICollection<T> labels, Dictionary<T, bool> hairDict) where T : HairDef
+        private void DrawTableHair(float x, float y, float width, ref Vector2 scroll, ref float innerY, string header, ref string searchBuffer)
         {
             Text.Font = GameFont.Small;
             const float ROW_HEIGHT = 32;
             GUI.BeginGroup(new Rect(x, y, width, 400));
-            Widgets.Label(new Rect(0, 0, width - 100, 20), header.Translate());
-            Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(0, 20, width - 65, 20), headerDesc.Translate());
-            Text.Font = GameFont.Small;
-            Rect rect = new Rect(0, 0, width - 16, innerY);
-            searchBuffer = Widgets.TextArea(new Rect(0, 40, 200, 28), searchBuffer);
-            if (Widgets.ButtonText(new Rect(200, 40, 28, 28), "X"))
+            Widgets.Label(new Rect(0, 0, width, 20), header.Translate());
+            searchBuffer = Widgets.TextArea(new Rect(0, 24, 200, 28), searchBuffer);
+            if (Widgets.ButtonText(new Rect(200, 24, 28, 28), "X"))
                 searchBuffer = "";
-            Widgets.BeginScrollView(new Rect(0, 75, width, 300), ref scroll, rect);
+            Widgets.BeginScrollView(new Rect(0, 75, width, 300), ref scroll, new Rect(0, 0, width - 16, innerY));
 
             innerY = 0;
             int index = 0;
-            foreach (T t in labels)
+            foreach (HairSaver t in Settings.HairDict.Values)
             {
                 if (!MatchesSearch(searchBuffer, t))
                     continue;
 
                 innerY = index++ * ROW_HEIGHT;
 
-                rect = new Rect(0, innerY, 184, ROW_HEIGHT);
-                Widgets.Label(rect, t.label + ":");
-
-                if (hairDict != null)
-                {
-                    bool b, orig;
-                    b = orig = hairDict[t];
-                    Widgets.Checkbox(new Vector2(width - 40, innerY - 1), ref b);
-                    if (b != orig)
-                    {
-                        hairDict[t] = b;
-                        break;
-                    }
-                }
+                Widgets.Label(new Rect(0, innerY, 184, ROW_HEIGHT), t.label + ":");
+                Widgets.Checkbox(new Vector2(width - 40, innerY - 1), ref t.forceHide);
             }
             Widgets.EndScrollView();
             GUI.EndGroup();
             innerY += ROW_HEIGHT;
         }
-
-        private bool MatchesSearch<T>(string searchBuffer, T t) where T : Def
+        private FloatMenu FloatMenuGenerator(Type enumType, Action<int> action)
         {
-            return searchBuffer == "" || t.label.ToLower().Contains(searchBuffer);
-        }
-
-        private void SetHatHideEnum<T>(string searchBuffer, Dictionary<T, HatHideEnum> items, HatHideEnum v) where T : ThingDef
-        {
-            foreach (T t in new List<T>(items.Keys))
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            foreach (int i in Enum.GetValues(enumType))
             {
-                if (this.MatchesSearch(searchBuffer, t))
-                {
-                    items[t] = v;
-                }
+                string name = Enum.GetName(enumType, i);
+                options.Add(new FloatMenuOption(name.Translate(), () => action(i)));
             }
+            return new FloatMenu(options);
         }
-        private void SetHatRendererEnum<T>(string searchBuffer, Dictionary<T, HatRendererEnum> items, HatRendererEnum v) where T : ThingDef
+
+        private bool MatchesSearch(string searchBuffer, HatSaver t)
         {
-            foreach (T t in new List<T>(items.Keys))
+            return MatchesSearch(searchBuffer, t.label);
+        }
+        private bool MatchesSearch(string searchBuffer, HairSaver t)
+        {
+            return MatchesSearch(searchBuffer, t.label);
+        }
+        private bool MatchesSearch(string searchBuffer, string t)
+        {
+            return searchBuffer == "" || t.ToLower().Contains(searchBuffer);
+        }
+
+        private void SetHatHide(string searchBuffer, HatEnum v)
+        {
+            foreach (HatSaver t in Settings.HatDict.Values)
             {
                 if (MatchesSearch(searchBuffer, t))
                 {
-                    items[t] = v;
+                    t.hatHide = v;
+                }
+            }
+        }
+        private void SetDraftedHide(string searchBuffer, HatStateEnum v)
+        {
+            foreach (HatSaver t in Settings.HatDict.Values)
+            {
+                if (MatchesSearch(searchBuffer, t))
+                {
+                    t.draftedHide = v;
+                }
+            }
+        }
+        private void SetIndoorsHide(string searchBuffer, HatStateEnum v)
+        {
+            foreach (HatSaver t in Settings.HatDict.Values)
+            {
+                if (MatchesSearch(searchBuffer, t))
+                {
+                    t.indoorsHide = v;
+                }
+            }
+        }
+        private void SetBedHide(string searchBuffer, HatStateEnum v)
+        {
+            foreach (HatSaver t in Settings.HatDict.Values)
+            {
+                if (MatchesSearch(searchBuffer, t))
+                {
+                    t.bedHide = v;
+                }
+            }
+        }
+        private void SetHatRenderer(string searchBuffer, HatRendererEnum v)
+        {
+            foreach (HatSaver t in Settings.HatDict.Values)
+            {
+                if (MatchesSearch(searchBuffer, t))
+                {
+                    t.hatRenderer = v;
                 }
             }
         }
     }
 
-    public enum HatHideEnum
+    public enum HatEnum
     {
+        HideHat,
         ShowsHair,
         HidesAllHair,
         HidesHairShowBeard,
+        ShowsHairHidesBeard
+    }
+    public enum HatStateEnum
+    {
+        Default,
         HideHat,
-        OnlyDraftSH,
-        OnlyDraftHH,
-        OnlyDraftHHSB
+        ShowsHair,
+        HidesAllHair,
+        HidesHairShowBeard,
+        ShowsHairHidesBeard
     }
 
     public enum HatRendererEnum
     {
-        NormalRender,
-        ForceOverHair
-    }
-
-    public enum Indoors
-    {
-        ShowHats,
-        HideHats,
-        ShowHatsWhenDrafted
+        ForceOverHair,
+        NormalRender
     }
 
     class Settings : ModSettings
     {
         public static bool OnlyApplyToColonists = false;
-        public static bool HideAllHats = false;
-        public static bool ShowHatsOnlyWhenDrafted = false;
-        public static bool ShowHatsWhenDraftedIndoors = false;
-        public static bool OptionsOpen = false;
-        public static Indoors Indoors = Indoors.ShowHats;
-
         public static bool UseDontShaveHead = true;
+        public static bool CheckIndoors = false;
 
-        public static Dictionary<ThingDef, HatHideEnum> HatsThatHide = new Dictionary<ThingDef, HatHideEnum>();
-        public static Dictionary<ThingDef, HatRendererEnum> HatsRenderer = new Dictionary<ThingDef, HatRendererEnum>();
-        public static Dictionary<HairDef, bool> HairToHide = new Dictionary<HairDef, bool>();
+        public static Dictionary<ThingDef, HatSaver> HatDict = new Dictionary<ThingDef, HatSaver>();
+        public static Dictionary<HairDef, HairSaver> HairDict = new Dictionary<HairDef, HairSaver>();
 
         private static ToSave ToSave = null;
 
@@ -287,6 +313,7 @@ namespace ShowHair
             {
                 ToSave.Clear();
 
+                CheckIndoors = HatDict.Values.Any((h) => h.indoorsHide != HatStateEnum.Default);
                 if (Current.Game != null)
                 {
                     foreach (var p in PawnsFinder.AllMaps)
@@ -298,80 +325,33 @@ namespace ShowHair
                         }
                     }
                 }
-
-                foreach (KeyValuePair<ThingDef, HatHideEnum> kv in HatsThatHide)
-                {
-                    switch (kv.Value)
-                    {
-                        case HatHideEnum.HidesAllHair:
-                            ToSave.hatsThatHideHair.Add(kv.Key.defName);
-                            break;
-                        case HatHideEnum.HidesHairShowBeard:
-                            ToSave.hatsToHideShowBeards.Add(kv.Key.defName);
-                            break;
-                        case HatHideEnum.HideHat:
-                            ToSave.hatsToHide.Add(kv.Key.defName);
-                            break;
-                        case HatHideEnum.OnlyDraftSH:
-                            ToSave.hatsToHideUnlessDraftedSH.Add(kv.Key.defName);
-                            break;
-                        case HatHideEnum.OnlyDraftHH:
-                            ToSave.hatsToHideUnlessDraftedHH.Add(kv.Key.defName);
-                            break;
-                        case HatHideEnum.OnlyDraftHHSB:
-                            ToSave.hatsToHideUnlessDraftedHHSB.Add(kv.Key.defName);
-                            break;
-                    }
-                }
-                foreach (KeyValuePair<ThingDef, HatRendererEnum> kv in HatsRenderer)
-                {
-                    if (kv.Value == HatRendererEnum.ForceOverHair)
-                    {
-                        ToSave.HatsForcedOverHair.Add(kv.Key.defName);
-                    }
-                }
-
-                ToSave.hairToHide = new List<string>();
-                foreach (KeyValuePair<HairDef, bool> kv in HairToHide)
-                    if (kv.Value)
-                        ToSave.hairToHide.Add(kv.Key.defName);
+                ToSave.hatList = HatDict.Values.Where((h) => h.hatHide != HatEnum.HideHat
+                                                             || h.draftedHide != HatStateEnum.Default
+                                                             || h.indoorsHide != HatStateEnum.Default
+                                                             || h.bedHide != HatStateEnum.Default
+                                                             || h.hatRenderer != HatRendererEnum.ForceOverHair).ToList();
+                ToSave.hairList = HairDict.Values.Where((h) => h.forceHide).ToList();
             }
+            Scribe_Values.Look(ref OnlyApplyToColonists, "OnlyApplyToColonists", false, false);
+            Scribe_Values.Look(ref UseDontShaveHead, "UseDontShaveHead", true, false);
+            Scribe_Collections.Look(ref ToSave.hatList, "Hats", LookMode.Deep);
+            Scribe_Collections.Look(ref ToSave.hairList, "Hair", LookMode.Deep);
 
-            Scribe_Collections.Look(ref ToSave.hatsThatHideHair, "HatsThatHide", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hatsToHideShowBeards, "HatsToHideShowBeards", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hatsToHideUnlessDraftedSH, "HatsToHideUnlessDraftedSH", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hatsToHideUnlessDraftedHH, "HatsToHideUnlessDraftedHH", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hatsToHideUnlessDraftedHHSB, "hatsToHideUnlessDraftedHHSB", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hatsToHide, "HatsToHide", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.HatsForcedOverHair, "HatsForcedOverHair", LookMode.Value);
-            Scribe_Collections.Look(ref ToSave.hairToHide, "HairToHide", LookMode.Value);
-            Scribe_Values.Look<bool>(ref HideAllHats, "HideAllHats", false, false);
-            Scribe_Values.Look<bool>(ref OnlyApplyToColonists, "OnlyApplyToColonists", false, false);
-            Scribe_Values.Look<bool>(ref ShowHatsOnlyWhenDrafted, "ShowHatsOnlyWhenDrafted", false, false);
-            Scribe_Values.Look<bool>(ref ShowHatsWhenDraftedIndoors, "ShowHatsWhenDraftedIndoors", false, false);
-            Scribe_Values.Look<Indoors>(ref Indoors, "Indoors", Indoors.ShowHats, false);
-            if (Scribe.mode != LoadSaveMode.Saving)
+            switch (Scribe.mode)
             {
-                bool b = false;
-                Scribe_Values.Look<bool>(ref b, "HideHatsIndoors", false, false);
-                if (b)
-                    Indoors = Indoors.HideHats;
+                case LoadSaveMode.Saving:
+                    ToSave?.Clear();
+                    ToSave = null;
+                    break;
+                case LoadSaveMode.PostLoadInit:
+                    CheckIndoors = HatDict.Values.Any((h) => h.indoorsHide != HatStateEnum.Default);
+                    break;
             }
-            Scribe_Values.Look<bool>(ref UseDontShaveHead, "UseDontShaveHead", true, false);
-
-            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                ToSave?.Clear();
-                ToSave = null;
-            }
-
-            OptionsOpen = false;
         }
 
         private static bool isInitialized = false;
         internal static void Initialize()
         {
-            int defCount = 0;
             if (!isInitialized)
             {
                 if (ToSave == null)
@@ -379,7 +359,7 @@ namespace ShowHair
 
                 foreach (ThingDef d in DefDatabase<ThingDef>.AllDefs)
                 {
-                    ++defCount;
+                    isInitialized = true;
 
                     if (d.apparel == null ||
                     !IsHeadwear(d.apparel) ||
@@ -389,47 +369,34 @@ namespace ShowHair
                         continue;
                     }
 
-                    HatHideEnum e = HatHideEnum.ShowsHair;
-                    if (ToSave.hatsThatHideHair?.Contains(d.defName) == true)
-                        e = HatHideEnum.HidesAllHair;
-                    else if (ToSave.hatsToHideShowBeards?.Contains(d.defName) == true)
-                        e = HatHideEnum.HidesHairShowBeard;
-                    else if (ToSave.hatsToHide?.Contains(d.defName) == true)
-                        e = HatHideEnum.HideHat;
-                    else if (ToSave.hatsToHideUnlessDraftedSH?.Contains(d.defName) == true)
-                        e = HatHideEnum.OnlyDraftSH;
-                    else if (ToSave.hatsToHideUnlessDraftedHH?.Contains(d.defName) == true)
-                        e = HatHideEnum.OnlyDraftHH;
-                    else if (ToSave.hatsToHideUnlessDraftedHHSB?.Contains(d.defName) == true)
-                        e = HatHideEnum.OnlyDraftHHSB;
-                    HatsThatHide[d] = e;
-
-                    HatRendererEnum f = HatRendererEnum.NormalRender;
-                    if (ToSave.HatsForcedOverHair?.Contains(d.defName) == true)
-                        f = HatRendererEnum.ForceOverHair;
-                    HatsRenderer[d] = f;
+                    HatSaver hat = ToSave?.hatList?.FirstOrFallback((h) => h.defName == d.defName);
+                    if (hat != null)
+                    {
+                        hat.label = d.label;
+                        HatDict.Add(d, hat);
+                    }
+                    else
+                        HatDict.Add(d, new HatSaver(d));
                 }
 
                 foreach (HairDef d in DefDatabase<HairDef>.AllDefs)
                 {
-                    ++defCount;
-                    bool selected = false;
-                    if (ToSave.hairToHide != null)
-                    {
-                        foreach (string s in ToSave.hairToHide)
-                        {
-                            if (s.Equals(d.defName))
-                            {
-                                selected = true;
-                                break;
-                            }
-                        }
-                    }
-                    HairToHide[d] = selected;
-                }
-
-                if (defCount > 0)
                     isInitialized = true;
+
+                    if (d == HairDefOf.Bald)
+                    {
+                        continue;
+                    }
+
+                    HairSaver hair = ToSave?.hairList?.FirstOrFallback((h) => h.defName == d.defName);
+                    if (hair != null)
+                    {
+                        hair.label = d.label;
+                        HairDict.Add(d, hair);
+                    }
+                    else
+                        HairDict.Add(d, new HairSaver(d));
+                }
 
                 if (isInitialized)
                 {
@@ -458,37 +425,19 @@ namespace ShowHair
 
     class ToSave
     {
-        public List<string> hatsThatHideHair = null;
-        public List<string> hatsToHide = null;
-        public List<string> hatsToHideShowBeards = null;
-        public List<string> hatsToHideUnlessDraftedSH = null;
-        public List<string> hatsToHideUnlessDraftedHH = null;
-        public List<string> hatsToHideUnlessDraftedHHSB = null;
-        public List<string> HatsForcedOverHair = null;
-        public List<string> hairToHide = null;
+        public List<HatSaver> hatList = null;
+        public List<HairSaver> hairList = null;
 
         public ToSave()
         {
-            hatsThatHideHair = new List<string>();
-            hatsToHide = new List<string>();
-            hatsToHideShowBeards = new List<string>();
-            hatsToHideUnlessDraftedSH = new List<string>();
-            hatsToHideUnlessDraftedHH = new List<string>();
-            hatsToHideUnlessDraftedHHSB = new List<string>();
-            HatsForcedOverHair = new List<string>();
-            hairToHide = new List<string>();
+            hatList = new List<HatSaver>();
+            hairList = new List<HairSaver>();
         }
 
         public void Clear()
         {
-            hatsThatHideHair?.Clear();
-            hatsToHide?.Clear();
-            hatsToHideShowBeards?.Clear();
-            hatsToHideUnlessDraftedSH?.Clear();
-            hatsToHideUnlessDraftedHH?.Clear();
-            hatsToHideUnlessDraftedHHSB?.Clear();
-            HatsForcedOverHair?.Clear();
-            hairToHide?.Clear();
+            hatList?.Clear();
+            hairList?.Clear();
         }
     }
 }

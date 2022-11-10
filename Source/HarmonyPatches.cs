@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using Verse;
 
@@ -15,17 +16,9 @@ namespace ShowHair
     {
         static HarmonyPatches()
         {
-            if (ModLister.GetActiveModWithIdentifier("CETeam.CombatExtended") != null)
-            {
-                Log.Error("[Show Hair With Hats] IS NOT COMPATABLE WITH COMBAT EXTENDED.");
-            }
-            if (ModLister.GetActiveModWithIdentifier("velc.HatsDisplaySelection") != null)
-            {
-                Log.Error("[Show Hair With Hats] Consider disabling \"Hats Display Selection\" as that mod may clash with this one.");
-            }
 
-            var harmony = new Harmony("com.showhair.rimworld.mod");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            var harmony = new Harmony("cat2002.showhair");
+            harmony.PatchAll();
         }
     }
 
@@ -64,48 +57,6 @@ namespace ShowHair
             }
         }
     }
-
-    /*[HarmonyPatch(typeof(Pawn), "SpawnSetup")]
-    static class Patch_Pawn_TickRare
-    {
-        static void Postfix(Pawn __instance)
-        {
-            if (__instance.RaceProps.Humanlike)
-            {
-                if (__instance.TryGetComp<CompCeilingDetect>() == null)
-                {
-                    var fi = typeof(Pawn).GetField("comps", BindingFlags.NonPublic | BindingFlags.Instance);
-                    List<ThingComp> comps = (List<ThingComp>)fi.GetValue(__instance);
-                    var c = (ThingComp)Activator.CreateInstance(typeof(CompCeilingDetect));
-                    c.parent = __instance;
-                    comps.Add(c);
-                    c.Initialize(new CompProperties_CeilingDetect());
-                    if (comps != null)
-                        comps.Add(c);
-                    else
-                    {
-                        comps = new List<ThingComp>() { c };
-                        fi.SetValue(__instance, comps);
-                    }
-                }
-            }
-        }
-    }*/
-
-    /* public class AAA
-     {
-         private void DrawHeadHair(Vector3 rootLoc, Vector3 headOffset, float angle, Rot4 bodyFacing, Rot4 headFacing, RotDrawMode bodyDrawType, PawnRenderFlags flags)
-         {
-             Vector3 onHeadLoc = rootLoc + headOffset;
-             onHeadLoc.y += 0.0289575271f;
-             List<ApparelGraphicRecord> apparelGraphics = null;
-             Quaternion quat = Quaternion.AngleAxis(angle, Vector3.up);
-             bool flag = false;
-             bool flag2 = bodyFacing == Rot4.North;
-             bool flag3 = flags.FlagSet(PawnRenderFlags.Headgear) && (!flags.FlagSet(PawnRenderFlags.Portrait) || !Prefs.HatsOnlyOnMap || flags.FlagSet(PawnRenderFlags.StylingStation));
-             Patch_PawnRenderer_DrawHeadHair.HideHats(ref flag, ref flag2, ref flag3, bodyFacing, this);
-         }
-     }*/
     [HarmonyPatch()]
     public static class Patch_PawnRenderer_DrawApparel
     {
@@ -139,7 +90,7 @@ namespace ShowHair
         }
         public static Vector3 GetHatRenderer(Vector3 prevLayer, ThingDef hat)
         {
-            if (Settings.HatsRenderer.TryGetValue(hat, out var e) && e != HatRendererEnum.NormalRender)
+            if (Settings.HatDict.TryGetValue(hat, out var e) && e.hatRenderer == HatRendererEnum.ForceOverHair)
             {
                 prevLayer.y += 0.002f;
             }
@@ -176,11 +127,8 @@ namespace ShowHair
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> il = instructions.ToList();
-#if DEBUG && TRANSPILER
-            bool firstAfterFound = true;
-#endif
 
-            MethodInfo get_IdeologyActive = AccessTools.Property(typeof(ModsConfig), nameof(ModsConfig.IdeologyActive))?.GetGetMethod();
+            MethodInfo get_IdeologyActive = AccessTools.Property(typeof(ModsConfig), nameof(ModsConfig.IdeologyActive)).GetGetMethod();
             MethodInfo hideHats =
                         typeof(Patch_PawnRenderer_DrawHeadHair).GetMethod(
                         nameof(Patch_PawnRenderer_DrawHeadHair.HideHats), BindingFlags.Static | BindingFlags.Public);
@@ -253,185 +201,82 @@ namespace ShowHair
 
         public static void HideHats(ref bool showHair, ref bool showBeard, ref bool showHat, bool inBed, Rot4 bodyFacing)
         {
-            if (inBed)
-                return;
-            try
+            if (flags.FlagSet(PawnRenderFlags.Portrait) && Prefs.HatsOnlyOnMap)
             {
-                //Log.Error($"Start {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                // Determine if hat should be shown
-                if (flags.FlagSet(PawnRenderFlags.Portrait) && Prefs.HatsOnlyOnMap)
-                {
-                    showHat = false;
-                    showHair = true;
-                    showBeard = true;
-                    //Log.Error($"0 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    return;
-                }
+                showHat = false;
+                showHair = pawn.story.hairDef != HairDefOf.Bald;
+                showBeard = bodyFacing != Rot4.North && pawn.style.beardDef != BeardDefOf.NoBeard;
+                return;
+            }
 
-                if (!showHat ||
-                    Settings.OnlyApplyToColonists && !FactionUtility.IsPlayerSafe(pawn.Faction) && !Settings.OptionsOpen)
-                {
-                    //Log.Error($"1 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    return;
-                }
+            if (!showHat || Settings.OnlyApplyToColonists && !FactionUtility.IsPlayerSafe(pawn.Faction))
+            {
+                return;
+            }
 
-                if (showHair && !showHat)
-                {
-                    CheckHideHat(ref showHair, ref showBeard, ref showHat, false);
-                    //Log.Error($"2 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    return;
-                }
+            showHair = true;
+            showBeard = bodyFacing != Rot4.North && pawn.style.beardDef != BeardDefOf.NoBeard;
 
-                showHair = true;
-                showBeard = true;
-
-                if (Settings.HideAllHats)
-                {
-                    showHat = false;
-                    //Log.Error($"3 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    return;
-                }
-
-                if (Settings.ShowHatsOnlyWhenDrafted)
-                {
-                    showHat = isDrafted;
-                    //Log.Error($"4.a {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                }
-                else if (showHat &&
-                        (Settings.Indoors == Indoors.HideHats ||
-                         (Settings.Indoors == Indoors.ShowHatsWhenDrafted && !isDrafted)))
-                {
-                    CompCeilingDetect comp = pawn.GetComp<CompCeilingDetect>();
-                    if (comp != null && comp.IsIndoors)
-                    {
-                        showHat = false;
-                        showHair = true;
-                        showBeard = true;
-                        return;
-                        //Log.Error($"4.b {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    }
-                }
-
-                if (pawn.story?.hairDef != null && Settings.HairToHide.TryGetValue(pawn.story.hairDef, out bool hide) && hide)
-                {
+            HatEnum hatEnum = GetHideEnum(inBed);
+            switch (hatEnum)
+            {
+                case HatEnum.ShowsHair:
+                    showHair = ShowHair();
+                    showHat = true;
+                    break;
+                case HatEnum.HidesAllHair:
                     showHair = false;
                     showBeard = false;
                     showHat = true;
-                    //Log.Error($"5 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                    return;
-                }
-
-                CheckHideHat(ref showHair, ref showBeard, ref showHat, false);
+                    break;
+                case HatEnum.HidesHairShowBeard:
+                    showHair = false;
+                    break;
+                case HatEnum.HideHat:
+                    showHair = ShowHair();
+                    showHat = false;
+                    break;
+                case HatEnum.ShowsHairHidesBeard:
+                    showHair = ShowHair();
+                    showBeard = false;
+                    showHat = true;
+                    break;
             }
-            finally
-            {
-                if (showBeard)
-                    showBeard = bodyFacing != Rot4.North && pawn.style.beardDef != BeardDefOf.NoBeard;
-                skipDontShaveHead = !showHat;
-            }
-            //Log.Error($"Final {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
+            skipDontShaveHead = !showHat;
         }
 
-        private static void CheckHideHat(ref bool showHair, ref bool showBeard, ref bool showHat, bool draftCheckOnly)
+        private static bool ShowHair() => !(pawn.story.hairDef == HairDefOf.Bald || Settings.HairDict.TryGetValue(pawn.story.hairDef, out HairSaver h) && h.forceHide);
+        private static HatEnum GetHideEnum(bool inBed)
         {
             Apparel apparel;
-            for (int j = 0; j < apparelGraphics?.Count; j++)
+            for (int j = 0; j < apparelGraphics.Count; j++)
             {
                 apparel = apparelGraphics[j].sourceApparel;
-                if (Settings.IsHeadwear(apparel?.def?.apparel))
+                if (Settings.IsHeadwear(apparel.def.apparel))
                 {
-                    //Log.Error("Last Layer " + def.defName);
-                    if (Settings.HatsThatHide.TryGetValue(apparel.def, out var e) && e != HatHideEnum.ShowsHair)
+                    if (!Settings.HatDict.TryGetValue(apparel.def,out HatSaver hat))
+                        return HatEnum.HideHat;
+                    Log.Message($"hatDef: {hat.defName}, hatHide: {hat.hatHide}, draftedHide: {hat.draftedHide}, indoorsHide: {hat.indoorsHide}, bedHide: {hat.bedHide}, hatRenderer: {hat.hatRenderer}");
+                    if (isDrafted && hat.draftedHide != HatStateEnum.Default)
                     {
-                        switch (e)
+                        return (HatEnum)(hat.draftedHide - 1);
+                    }
+                    else if (inBed && hat.bedHide != HatStateEnum.Default)
+                    {
+                        return (HatEnum)(hat.bedHide - 1);
+                    }
+                    else if (Settings.CheckIndoors && hat.indoorsHide != HatStateEnum.Default)
+                    {
+                        CompCeilingDetect comp = pawn.GetComp<CompCeilingDetect>();
+                        if (comp != null && comp.IsIndoors)
                         {
-                            case HatHideEnum.HidesAllHair:
-                                if (!draftCheckOnly)
-                                {
-                                    showHair = false;
-                                    showBeard = false;
-                                    showHat = true;
-                                }
-                                break;
-                            case HatHideEnum.HidesHairShowBeard:
-                                if (!draftCheckOnly)
-                                {
-                                    showHair = false;
-                                    showBeard = true;
-                                    showHat = true;
-                                }
-                                break;
-                            case HatHideEnum.HideHat:
-                                if (!draftCheckOnly)
-                                {
-                                    showHair = true;
-                                    showBeard = true;
-                                    showHat = false;
-                                }
-                                break;
-                            default: // Drafted cases
-                                if (pawn.Drafted)
-                                {
-                                    if (e == HatHideEnum.OnlyDraftHH)
-                                    {
-                                        showHair = false;
-                                        showBeard = false;
-                                    }
-                                    else if (e == HatHideEnum.OnlyDraftHHSB)
-                                    {
-                                        showHair = false;
-                                        showBeard = true;
-                                    }
-                                    else
-                                    {
-                                        showHair = true;
-                                    }
-                                    showHat = true;
-                                }
-                                else
-                                {
-                                    showHair = true;
-                                    showHat = true;
-                                }
-                                break;
+                            return (HatEnum)(hat.indoorsHide - 1);
                         }
-                        //Log.Error($"6 {pawn.Name.ToStringShort} hideHair:{hideHair}  hideBeard:{hideBeard}  showHat:{showHat}");
-                        return;
                     }
+                    return hat.hatHide;
                 }
             }
+            return HatEnum.HideHat;
         }
-
-#if DEBUG && TRANSPILER
-        static void printTranspiler(CodeInstruction i, string pre = "")
-        {
-            Log.Warning("CodeInstruction: " + pre + " opCode: " + i.opcode + " operand: " + i.operand + " labels: " + printLabels(i.ExtractLabels()));
-        }
-
-        static string printLabels(IEnumerable<Label> labels)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            if (labels == null)
-            {
-                sb.Append("<null labels>");
-            }
-            else
-            {
-                foreach (Label l in labels)
-                {
-                    if (sb.Length > 0)
-                    {
-                        sb.Append(", ");
-                    }
-                    sb.Append(l);
-                }
-            }
-            if (sb.Length == 0)
-            {
-                sb.Append("<empty labels>");
-            }
-            return sb.ToString();
-        }
-#endif
     }
 }
