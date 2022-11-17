@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "63ed3110-2ad3-4027-a45d-4a2dfd21d86b": {
+      "ProjectGuid": "63ed3110-2ad3-4027-a45d-4a2dfd21d86b",
+      "DisplayName": "ShowHair",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

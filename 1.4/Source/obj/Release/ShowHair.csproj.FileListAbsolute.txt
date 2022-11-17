@@ -1,0 +1,9 @@
+G:\SteamLibrary\steamapps\common\RimWorld\Steam\steamapps\common\RimWorld\Mods\ShowHair\1.3\Assemblies\ShowHair.dll
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Release\ShowHair.csproj.AssemblyReference.cache
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Release\ShowHair.csproj.CoreCompileInputs.cache
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Release\ShowHair.dll
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Assemblies\ShowHair.dll
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\1.4\Source\obj\Release\ShowHair.csproj.AssemblyReference.cache
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\1.4\Source\obj\Release\ShowHair.csproj.CoreCompileInputs.cache
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\1.4\Source\obj\Release\ShowHair.dll
+G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\1.4\Assemblies\ShowHair.dll
