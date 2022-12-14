@@ -1,6 +1,0 @@
-G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Debug\ShowHair.csproj.AssemblyReference.cache
-G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Debug\ShowHair.csproj.CoreCompileInputs.cache
-C:\Users\travis\Desktop\RimworldDebug\Mods\ShowHair\1.2\Assemblies\ShowHair.dll
-G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Source\obj\Debug\ShowHair.dll
-G:\SteamLibrary\steamapps\common\RimWorld\Mods\Assemblies\ShowHair.dll
-G:\SteamLibrary\steamapps\common\RimWorld\Mods\rimworld-showhair\Assemblies\ShowHair.dll

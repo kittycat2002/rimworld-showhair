@@ -1,4 +1,4 @@
-/obj/
-Source/obj/
-/Source/.vs/
+obj
+.vs
+*.dds
 Thumbs.db
