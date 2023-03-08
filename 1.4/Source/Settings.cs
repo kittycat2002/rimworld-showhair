@@ -53,18 +53,19 @@ namespace ShowHair
             Scribe_Values.Look(ref forceHide, "forceHide", false);
         }
     }
-    public class SettingsController : Mod
+    public class ShowHairMod : Mod
     {
 
         private Settings Settings;
-
+        public static ShowHairMod Instance { get; private set; }
         private Vector2 scrollPosition = new Vector2(0, 0);
         private Vector2 scrollPosition2 = new Vector2(0, 0);
         private float previousHatY, previousHairY;
         private string leftTableSearchBuffer = "", rightTableSearchBuffer = "";
 
-        public SettingsController(ModContentPack content) : base(content)
+        public ShowHairMod(ModContentPack content) : base(content)
         {
+            Instance = this;
             Settings = GetSettings<Settings>();
 
             HairUtilityFactory.GetHairUtility();

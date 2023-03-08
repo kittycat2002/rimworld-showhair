@@ -1,0 +1,17 @@
+ManifestFileVersion: 0
+CRC: 3757931703
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 53d5b0006e3704b18f6c71a29b897ef2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 55d48f4ad9c3b13330b9eb5ee5686477
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/InvisibleMasked.shader
+Dependencies: []

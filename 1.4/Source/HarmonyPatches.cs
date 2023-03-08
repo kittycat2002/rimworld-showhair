@@ -15,7 +15,6 @@ namespace ShowHair
     {
         static HarmonyPatches()
         {
-
             var harmony = new Harmony("cat2002.showhair");
             harmony.PatchAll();
         }
