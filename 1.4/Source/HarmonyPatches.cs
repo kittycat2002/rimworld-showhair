@@ -27,18 +27,15 @@ namespace ShowHair
         static void Postfix()
         {
             Settings.Initialize();
-            //Patch_PawnRenderer_DrawHeadHair.Initialize();
         }
     }
 
     [HarmonyPatch(typeof(SavedGameLoaderNow), "LoadGameFromSaveFileNow")]
     static class Patch_SavedGameLoader_LoadGameFromSaveFileNow
     {
-        [HarmonyPriority(Priority.Last)]
         static void Postfix()
         {
             Settings.Initialize();
-            //Patch_PawnRenderer_DrawHeadHair.Initialize();
 
         }
     }
@@ -285,6 +282,8 @@ namespace ShowHair
         }
         private static bool ShouldDrawHat(ThingDef apparel, bool inBed)
         {
+            if (Settings.OnlyApplyToColonists && !FactionUtility.IsPlayerSafe(pawn.Faction))
+                return true;
             HatEnum hatEnum = HatEnum.HideHat;
             if (!Settings.HatDict.TryGetValue(apparel, out HatSaver hat))
                 hatEnum = HatEnum.HideHat;

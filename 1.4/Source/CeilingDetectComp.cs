@@ -19,24 +19,20 @@ namespace ShowHair
 
         public override void CompTickRare()
         {
-            Pawn pawn = base.parent as Pawn;
-            Map map = pawn?.Map;
+            Pawn pawn = parent as Pawn;
 
-            if (!Settings.CheckIndoors || Settings.OnlyApplyToColonists && pawn.Faction?.IsPlayer == false)
-                return;
-
-            if (map != null && pawn.RaceProps?.Humanlike == true && !pawn.Dead)
+            if (Settings.CheckIndoors && !(Settings.OnlyApplyToColonists && pawn.Faction.IsPlayerSafe()) && pawn?.Map != null && pawn.RaceProps?.Humanlike == true && !pawn.Dead)
             {
                 if (isIndoors == null)
                 {
-                    isIndoors = DetermineIsIndoors(pawn, map);
+                    isIndoors = DetermineIsIndoors(pawn);
                     PortraitsCache.SetDirty(pawn);
                     GlobalTextureAtlasManager.TryMarkPawnFrameSetDirty(pawn);
                     return;
                 }
 
                 bool orig = isIndoors.Value;
-                this.isIndoors = DetermineIsIndoors(pawn, map);
+                isIndoors = DetermineIsIndoors(pawn);
                 if (orig != isIndoors.Value)
                 {
                     PortraitsCache.SetDirty(pawn);
@@ -45,7 +41,7 @@ namespace ShowHair
             }
         }
 
-        private bool DetermineIsIndoors(Pawn pawn, Map map)
+        private bool DetermineIsIndoors(Pawn pawn)
         {
             var room = pawn.GetRoom();
             return room != null && room.OpenRoofCount == 0;
