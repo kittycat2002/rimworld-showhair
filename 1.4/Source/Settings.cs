@@ -295,7 +295,6 @@ namespace ShowHair
     {
         public static bool OnlyApplyToColonists = false;
         public static bool UseDontShaveHead = true;
-        public static bool CheckIndoors = false;
 
         public static Dictionary<ThingDef, HatSaver> HatDict = new Dictionary<ThingDef, HatSaver>();
         public static Dictionary<HairDef, HairSaver> HairDict = new Dictionary<HairDef, HairSaver>();
@@ -313,7 +312,6 @@ namespace ShowHair
             {
                 ToSave.Clear();
 
-                CheckIndoors = HatDict.Values.Any((h) => h.indoorsHide != HatStateEnum.Default);
                 if (Current.Game != null)
                 {
                     foreach (var p in PawnsFinder.AllMaps)
@@ -342,9 +340,6 @@ namespace ShowHair
                 case LoadSaveMode.Saving:
                     ToSave?.Clear();
                     ToSave = null;
-                    break;
-                case LoadSaveMode.PostLoadInit:
-                    CheckIndoors = HatDict.Values.Any((h) => h.indoorsHide != HatStateEnum.Default);
                     break;
             }
         }

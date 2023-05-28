@@ -20,8 +20,7 @@ namespace ShowHair
         public override void CompTickRare()
         {
             Pawn pawn = parent as Pawn;
-
-            if (Settings.CheckIndoors && !(Settings.OnlyApplyToColonists && pawn.Faction.IsPlayerSafe()) && pawn?.Map != null && pawn.RaceProps?.Humanlike == true && !pawn.Dead)
+            if ((!Settings.OnlyApplyToColonists || (Settings.OnlyApplyToColonists && pawn.Faction.IsPlayerSafe())) && pawn.Map != null && pawn.RaceProps.Humanlike && !pawn.Dead)
             {
                 if (isIndoors == null)
                 {

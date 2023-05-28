@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 using Verse;
+using static RimWorld.FleshTypeDef;
 
 namespace ShowHair
 {
@@ -71,7 +72,7 @@ namespace ShowHair
             bool loadFound = false;
             for (int i = 0; i < il.Count; ++i)
             {
-                if (!loadFound && il[i].opcode == OpCodes.Ldfld && il[i].OperandIs(onHeadLoc))
+                if (!loadFound && il[i].Is(OpCodes.Ldfld, onHeadLoc))
                 {
                     loadFound = true;
                     yield return il[i];
@@ -131,18 +132,21 @@ namespace ShowHair
             MethodInfo shouldDrawHat = AccessTools.Method(
                         typeof(Patch_PawnRenderer_DrawHeadHair),
                         nameof(Patch_PawnRenderer_DrawHeadHair.ShouldDrawHat), new Type[] { typeof(ThingDef), typeof(bool) });
+            MethodInfo shouldDrawHatList = AccessTools.Method(
+                        typeof(Patch_PawnRenderer_DrawHeadHair),
+                        nameof(Patch_PawnRenderer_DrawHeadHair.ShouldDrawHat), new Type[] { typeof(List<ApparelGraphicRecord>), typeof(bool) });
             MethodInfo drawMeshNowOrLater = AccessTools.Method(typeof(GenDraw), nameof(GenDraw.DrawMeshNowOrLater), new Type[] { typeof(Mesh), typeof(Vector3), typeof(Quaternion), typeof(Material), typeof(bool) });
             MethodInfo drawMeshNowOrLaterPatch =
                         typeof(Patch_PawnRenderer_DrawHeadHair).GetMethod(
                         nameof(Patch_PawnRenderer_DrawHeadHair.DrawMeshNowOrLaterPatch), BindingFlags.Static | BindingFlags.NonPublic);
             MethodInfo drawApparel = AccessTools.FindIncludingInnerTypes(typeof(PawnRenderer), (type) => AccessTools.FirstMethod(type, (method) => method.Name.Contains("g__DrawApparel") && method.ReturnType == typeof(void)));
             MethodInfo getApparelItem = typeof(List<ApparelGraphicRecord>).GetProperty("Item").GetGetMethod();
-            bool found1 = false, found2 = false;
+            bool found1 = false, found2 = false, found3 = false;
             int drawFound = 0;
             for (int i = 0; i < il.Count; i++)
             {
                 // Inject after the show/hide flags are set but before they're used
-                if (!found1 && il[i].opcode == OpCodes.Call && il[i].OperandIs(get_IdeologyActive))
+                if (!found1 && il[i].Is(OpCodes.Call, get_IdeologyActive))
                 {
                     found1 = true;
 
@@ -160,7 +164,7 @@ namespace ShowHair
                     yield return new CodeInstruction(OpCodes.Call, get_IdeologyActive);
                     i++;
                 }
-                else if (il[i].opcode == OpCodes.Call && il[i].OperandIs(drawMeshNowOrLater))
+                else if (il[i].Is(OpCodes.Call,drawMeshNowOrLater))
                 {
                     ++drawFound;
                     if (drawFound == 3)
@@ -169,21 +173,19 @@ namespace ShowHair
                         il[i].operand = drawMeshNowOrLaterPatch;
                     }
                 }
-                else if (i < il.Count-4 && il[i+4].opcode == OpCodes.Callvirt && il[i+4].OperandIs(drawApparel))
+                else if (!found3 && il[i].opcode == OpCodes.Stloc_S && il[i].operand is LocalBuilder builder && builder.LocalIndex == 4)
                 {
-                    var operand = il[i-1].operand;
+                    found3 = true;
+                    yield return il[i];
                     yield return new CodeInstruction(OpCodes.Ldloc_1);
-                    yield return il[i+2].Clone();
-                    yield return new CodeInstruction(OpCodes.Callvirt, getApparelItem);
-                    yield return CodeInstruction.LoadField(typeof(ApparelGraphicRecord), "sourceApparel");
-                    yield return CodeInstruction.LoadField(typeof(Apparel), "def");
                     yield return new CodeInstruction(OpCodes.Ldloc_S, 4);
-                    yield return new CodeInstruction(OpCodes.Call, shouldDrawHat);
-                    yield return new CodeInstruction(OpCodes.Brfalse_S, operand);
+                    yield return new CodeInstruction(OpCodes.Call, shouldDrawHatList);
+                    yield return new CodeInstruction(OpCodes.Stloc_1);
+                    i++;
                 }
-                yield return il[i];
+                    yield return il[i];
             }
-            if (!found1 && !found2)
+            if (!found1 || !found2 || !found3)
             {
                 Log.Error("Show Hair or Hide All Hats could not inject itself properly. This is due to other mods modifying the same code this mod needs to modify.");
             }
@@ -246,14 +248,19 @@ namespace ShowHair
                     {
                         hatEnum = (HatEnum)(hat.bedHide - 1);
                     }
-                    else if (Settings.CheckIndoors && hat.indoorsHide != HatStateEnum.Default)
+                    else if (hat.indoorsHide != HatStateEnum.Default)
                     {
                         CompCeilingDetect comp = pawn.GetComp<CompCeilingDetect>();
                         if (comp != null && comp.IsIndoors)
                         {
                             hatEnum = (HatEnum)(hat.indoorsHide - 1);
                         }
-                    } else
+                        else
+                        {
+                            hatEnum = hat.hatHide;
+                        }
+                    }
+                    else
                     {
                         hatEnum = hat.hatHide;
                     }
@@ -295,12 +302,16 @@ namespace ShowHair
             {
                 hatEnum = (HatEnum)(hat.bedHide - 1);
             }
-            else if (Settings.CheckIndoors && hat.indoorsHide != HatStateEnum.Default)
+            else if (hat.indoorsHide != HatStateEnum.Default)
             {
                 CompCeilingDetect comp = pawn.GetComp<CompCeilingDetect>();
                 if (comp != null && comp.IsIndoors)
                 {
                     hatEnum = (HatEnum)(hat.indoorsHide - 1);
+                }
+                else
+                {
+                    hatEnum = hat.hatHide;
                 }
             }
             else
@@ -308,6 +319,14 @@ namespace ShowHair
                 hatEnum = hat.hatHide;
             }
             return hatEnum != HatEnum.HideHat;
+        }
+        private static bool ShouldDrawHat(ApparelGraphicRecord apparel, bool inBed)
+        {
+            return ShouldDrawHat(apparel.sourceApparel.def, inBed);
+        }
+        private static List<ApparelGraphicRecord> ShouldDrawHat(List<ApparelGraphicRecord> apparel, bool inBed)
+        {
+            return apparel.Where(a => ShouldDrawHat(a, inBed)).ToList();
         }
     }
 }
