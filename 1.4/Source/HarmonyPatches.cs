@@ -227,7 +227,7 @@ namespace ShowHair
                 && !FactionUtility.IsPlayerSafe(pawn.Faction)))
                 return;
 
-            showHair = pawn.story.hairDef != HairDefOf.Bald && (!Settings.HairDict.TryGetValue(pawn.story.hairDef, out HairSaver h) || !h.forceHide);
+            showHair = pawn.story.hairDef != HairDefOf.Bald;
             showBeard = bodyFacing != Rot4.North && pawn.style.beardDef != null && pawn.style.beardDef != BeardDefOf.NoBeard;
 
             Apparel apparel;
@@ -286,6 +286,10 @@ namespace ShowHair
                 }
             }
             skipDontShaveHead = hatCount == 0;
+            if (!skipDontShaveHead && showHair && Settings.HairDict.TryGetValue(pawn.story.hairDef, out HairSaver h) && h.forceHide)
+            {
+                showHair = false;
+            }
         }
         private static bool ShouldDrawHat(ThingDef apparel, bool inBed)
         {
