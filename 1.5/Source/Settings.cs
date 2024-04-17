@@ -54,8 +54,6 @@ namespace ShowHair
     public class SettingsController : Mod
     {
 
-        private Settings Settings;
-
         private Vector2 scrollPosition = new Vector2(0, 0);
         private Vector2 scrollPosition2 = new Vector2(0, 0);
         private float previousHatY, previousHairY;
@@ -63,7 +61,7 @@ namespace ShowHair
 
         public SettingsController(ModContentPack content) : base(content)
         {
-            Settings = GetSettings<Settings>();
+            GetSettings<Settings>();
         }
 
         public override string SettingsCategory()

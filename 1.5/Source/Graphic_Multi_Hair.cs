@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using System;
 using UnityEngine;
 using Verse;
 
@@ -18,10 +19,14 @@ namespace ShowHair
                 bool upperHead = false;
                 foreach (Apparel apparel in parms.pawn.apparel.WornApparel)
                 {
-                    if (Settings.IsHeadwear(apparel.def.apparel) && Settings.TryGetPawnHatState(parms.pawn, apparel.def, out var hatEnum) && hatEnum != HatEnum.HideHat)
+                    if (Settings.IsHeadwear(apparel.def.apparel) && Settings.TryGetPawnHatState(parms.pawn, apparel.def, out var hatEnum) && hatEnum != HatEnum.HideHat && (apparel.def.apparel.renderSkipFlags == null || !apparel.def.apparel.renderSkipFlags.Contains(RenderSkipFlagDefOf.None)))
                     {
                         if (apparel.def.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.FullHead))
                         {
+                            if (fullHeadMat[i] == null)
+                            {
+                                return base.NodeGetMat(parms);
+                            }
                             return fullHeadMat[i];
                         }
                         else if (apparel.def.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.UpperHead))
@@ -32,6 +37,10 @@ namespace ShowHair
                 }
                 if (upperHead)
                 {
+                    if (upperHeadMat[i] == null)
+                    {
+                        return base.NodeGetMat(parms);
+                    }
                     return upperHeadMat[i];
                 }
             }
@@ -276,8 +285,8 @@ namespace ShowHair
                 }
             }
         }
-        Material[] fullHeadMat = new Material[4];
-        Material[] upperHeadMat = new Material[4];
+        readonly Material[] fullHeadMat = new Material[4];
+        readonly Material[] upperHeadMat = new Material[4];
     }
 
     /*[HarmonyPatch()]

@@ -24,7 +24,7 @@ namespace ShowHair
     [HarmonyPatch(typeof(Game), "InitNewGame")]
     static class Patch_Game_InitNewGame
     {
-        static void Postfix()
+        public static void Postfix()
         {
             Settings.Initialize();
         }
@@ -33,7 +33,7 @@ namespace ShowHair
     [HarmonyPatch(typeof(SavedGameLoaderNow), "LoadGameFromSaveFileNow")]
     static class Patch_SavedGameLoader_LoadGameFromSaveFileNow
     {
-        static void Postfix()
+        public static void Postfix()
         {
             Settings.Initialize();
 
@@ -43,7 +43,7 @@ namespace ShowHair
     [HarmonyPatch(typeof(Pawn_DraftController), "set_Drafted")]
     static class Patch_Pawn_DraftController
     {
-        static void Postfix(Pawn_DraftController __instance)
+        public static void Postfix(Pawn_DraftController __instance)
         {
             var p = __instance.pawn;
             if (p.IsColonist && !p.Dead && p.def.race.Humanlike)
@@ -151,7 +151,7 @@ namespace ShowHair
     [HarmonyPatch(typeof(PawnRenderNodeWorker_Apparel_Head), "CanDrawNow")]
     static class Patch_PawnRenderNodeWorker_Apparel_Head_CanDrawNow
     {
-        static void Postfix(ref bool __result, PawnRenderNode n)
+        public static void Postfix(ref bool __result, PawnRenderNode n)
         {
             if (!Settings.OnlyApplyToColonists || n.tree.pawn.Faction.IsPlayerSafe())
                 __result = __result && Settings.TryGetPawnHatState(n.tree.pawn, n.apparel.def, out var hatEnum) && hatEnum != HatEnum.HideHat;
