@@ -153,8 +153,8 @@ namespace ShowHair
     {
         public static void Postfix(ref bool __result, PawnRenderNode n)
         {
-            if (!Settings.OnlyApplyToColonists || n.tree.pawn.Faction.IsPlayerSafe())
-                __result = __result && Settings.TryGetPawnHatState(n.tree.pawn, n.apparel.def, out var hatEnum) && hatEnum != HatEnum.HideHat;
+            if ((!Settings.OnlyApplyToColonists || n.tree.pawn.Faction.IsPlayerSafe()) && n.apparel != null && Settings.TryGetPawnHatState(n.tree.pawn, n.apparel.def, out var hatEnum))
+                __result = __result && hatEnum != HatEnum.HideHat;
         }
     }
 
