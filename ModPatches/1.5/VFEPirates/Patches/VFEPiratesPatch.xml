@@ -1,0 +1,5 @@
+<Patch>
+	<Operation Class="PatchOperationRemove">
+		<xpath>/Defs/VFEPirates.WarcasketDef[@Name='VFEP_WarcasketHelmetBase']/modExtensions/li[@Class="VFECore.ApparelDrawPosExtension"]/hideHead</xpath>
+	</Operation>
+</Patch>
