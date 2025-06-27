@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
+  <ShowHair.OnlyApplyToColonists>入植者にだけ適用する</ShowHair.OnlyApplyToColonists>
+  <ShowHair.Hats>帽子</ShowHair.Hats>
+  <ShowHair.DefaultMode>初期</ShowHair.DefaultMode>
+  <ShowHair.DraftedMode>徴兵時</ShowHair.DraftedMode>
+  <ShowHair.IndoorsMode>室内</ShowHair.IndoorsMode>
+  <ShowHair.BedMode>ベッド</ShowHair.BedMode>
+  <ShowHair.RenderMode>帽子</ShowHair.RenderMode>
+  <ShowsHair>髪表示</ShowsHair>
+  <HideHat>帽子隠</HideHat>
+  <HidesAllHair>髪全隠</HidesAllHair>
+  <HidesHairShowBeard>髪無ヒゲ有</HidesHairShowBeard>
+  <ShowsHairHidesBeard>髪有ヒゲ無</ShowsHairHidesBeard>
+  <NormalRender>通常</NormalRender>
+  <ForceOverHair>強制髪上</ForceOverHair>
+  <ShowHair.HairThatWillBeHidden>帽子が隠す髪</ShowHair.HairThatWillBeHidden>
+  <ShowHair.UseDontShaveHead>Don't Shave Your Hairの髪を使う</ShowHair.UseDontShaveHead>
+</LanguageData>

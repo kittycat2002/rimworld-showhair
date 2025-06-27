@@ -2,3 +2,7 @@ obj
 .vs
 *.dds
 Thumbs.db
+.idea
+*.DotSettings.user
+*.dll
+*.pdb

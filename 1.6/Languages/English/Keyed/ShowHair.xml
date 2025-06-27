@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+	<ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
+	<ShowHair.OnlyApplyToColonists>Only Apply to Colonists</ShowHair.OnlyApplyToColonists>
+	<ShowHair.InBed>In Bed</ShowHair.InBed>
+	<ShowHair.Drafted>Drafted</ShowHair.Drafted>
+	<ShowHair.Indoors>Indoors</ShowHair.Indoors>
+	<ShowHair.HideHat>Hide Hat</ShowHair.HideHat>
+	<ShowHair.ShowsHair>Show Hair</ShowHair.ShowsHair>
+	<ShowHair.HidesAllHair>Hide All Hair</ShowHair.HidesAllHair>
+	<ShowHair.HidesHairShowBeard>Hide Hair, Show Beard</ShowHair.HidesHairShowBeard>
+	<ShowHair.ShowsHairHidesBeard>Show Hair, Hide Beard</ShowHair.ShowsHairHidesBeard>
+	<ShowHair.HairThatWillBeHidden>Hair That Hats Will Hide</ShowHair.HairThatWillBeHidden>
+	<ShowHair.UseDontShaveHead>Use "Don't Shave Your Hair" hairs</ShowHair.UseDontShaveHead>
+	<ShowHair.All>All</ShowHair.All>
+	<ShowHair.Any>Any</ShowHair.Any>
+	<ShowHair.Always>Always</ShowHair.Always>
+</LanguageData>
+

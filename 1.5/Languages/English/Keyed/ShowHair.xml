@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+	<ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
+	<ShowHair.OnlyApplyToColonists>Only Apply to Colonists</ShowHair.OnlyApplyToColonists>
+	<ShowHair.Hats>Hats</ShowHair.Hats>
+	<ShowHair.DefaultMode>Default</ShowHair.DefaultMode>
+	<ShowHair.DraftedMode>Drafted</ShowHair.DraftedMode>
+	<ShowHair.IndoorsMode>Indoors</ShowHair.IndoorsMode>
+	<ShowHair.BedMode>In Bed</ShowHair.BedMode>
+	<ShowHair.RenderMode>Hats</ShowHair.RenderMode>
+	<ShowsHair>Show Hair</ShowsHair>
+	<HideHat>Hide Hat</HideHat>
+	<HidesAllHair>Hide All Hair</HidesAllHair>
+	<HidesHairShowBeard>Hide Hair, Show Beard</HidesHairShowBeard>
+	<ShowsHairHidesBeard>Show Hair, Hide Beard</ShowsHairHidesBeard>
+	<NormalRender>Normal</NormalRender>
+	<ForceOverHair>Force Over Hair</ForceOverHair>
+	<ShowHair.HairThatWillBeHidden>Hair That Hats Will Hide</ShowHair.HairThatWillBeHidden>
+	<ShowHair.UseDontShaveHead>Use "Don't Shave Your Hair" hairs</ShowHair.UseDontShaveHead>
+</LanguageData>

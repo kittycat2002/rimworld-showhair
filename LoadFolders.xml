@@ -7,6 +7,10 @@
   <v1.5>
     <li>/</li>
     <li>1.5</li>
-    <li IfModActive="oskarpotocki.vfe.pirates">ModPatches\1.5\VFEPirates</li>
+    <li IfModActive="oskarpotocki.vfe.pirates">1.5\ModCompatibility\VFEPirates</li>
   </v1.5>
+  <v1.6>
+    <li>/</li>
+    <li>1.6</li>
+  </v1.6>
 </loadFolders>

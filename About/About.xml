@@ -5,6 +5,7 @@
   <supportedVersions>
     <li>1.4</li>
     <li>1.5</li>
+    <li>1.6</li>
   </supportedVersions>
   <packageId>cat2002.showhair</packageId>
   <description>Show hair for all hats or select which hats do hide hair in Mod Settings.
