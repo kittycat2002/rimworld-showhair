@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using RimWorld;
@@ -14,18 +16,8 @@ internal enum HatEnum
 	HideHat,
 	ShowsHair,
 	HidesAllHair,
-	HidesHairShowBeard,
+	HidesHairShowsBeard,
 	ShowsHairHidesBeard
-}
-
-[Flags]
-internal enum ConditionEnum : uint
-{
-	None = 0U,
-	InBed = 1U,
-	Drafted = 2U,
-	Indoors = 4U,
-	// HomeArea = 8U To be implemented
 }
 
 [UsedImplicitly]
@@ -52,6 +44,11 @@ internal class ShowHairMod : Mod
 
 	public ShowHairMod(ModContentPack content) : base(content)
 	{
+		if (ParseHelper.Parsers<ulong>.parser == null)
+		{
+			ParseHelper.Parsers<ulong>.Register(ulong.Parse);
+		}
+
 		settings = GetSettings<Settings>();
 	}
 
@@ -80,52 +77,11 @@ internal class ShowHairMod : Mod
 		section.ColumnWidth = (section.listingRect.width - 17f) / 2;
 		DrawSettingEntries(section);
 		section.NewColumn();
-		DrawHairSection(section);
+		Rect rect2 = new(section.curX, section.CurHeight, section.ColumnWidth,
+			section.listingRect.height - section.CurHeight);
+		Settings.HairSelectorUI.DrawSection(rect2, ref scrollPositionHairSection, ref viewHeightHairSection);
 		listing.EndSection(section);
 		listing.End();
-	}
-
-	private void DrawHairSection(Listing_Standard listing)
-	{
-		Rect rect = new(listing.curX, listing.CurHeight, listing.ColumnWidth, listing.listingRect.height - listing.CurHeight);
-		Rect rect2 = new(listing.curX, 0f, rect.width - 16, viewHeightHairSection);
-		
-		Text.Anchor = TextAnchor.MiddleLeft;
-		Widgets.BeginScrollView(rect, ref scrollPositionHairSection, rect2);
-		float num = 0f;
-
-		foreach (HairDef hair in DefDatabase<HairDef>.AllDefs.Where(hair => hair != HairDefOf.Bald))
-		{
-			Rect rect3 = new(listing.curX, listing.curY + num, listing.ColumnWidth, 26f);
-			num += rect3.height;
-			rect3.xMin += 13f;
-			rect3.xMax -= 13f;
-			Widgets.DrawHighlightIfMouseover(rect3);
-			Widgets.DefIcon(rect3.LeftPartPixels(26f), hair, scale: 1.25f);
-			rect3.xMin += 20f;
-			rect3.yMax += 5f;
-			rect3.yMin -= 5f;
-			bool state = Settings.hiddenHairs.Contains(hair);
-			bool oldState = state;
-			Widgets.CheckboxLabeled(rect3, hair.label, ref state, paintable: true);
-			if (state == oldState) continue;
-			if (state)
-			{
-				Settings.hiddenHairs.Add(hair);
-			}
-			else
-			{
-				Settings.hiddenHairs.Remove(hair);
-			}
-		}
-
-		if (Event.current.type == EventType.Layout)
-		{
-			viewHeightHairSection = num;
-		}
-
-		Widgets.EndScrollView();
-		Text.Anchor = TextAnchor.UpperLeft;
 	}
 
 	private void DrawSettingEntries(Listing_Standard listing)
@@ -157,34 +113,38 @@ internal class ShowHairMod : Mod
 
 internal class Settings : ModSettings
 {
-	private readonly Dictionary<ThingDef, Dictionary<ConditionEnum, HatEnum>> cachedHatStates = new();
+	private readonly ConcurrentDictionary<ThingDef, Dictionary<ulong, HatEnum>> cachedHatStates = new();
+
+	private HairSelectorUI? hairSelectorUI;
+
+	private HashSet<string> hairDefNames = [];
+
+	internal HairSelectorUI HairSelectorUI
+	{
+		get
+		{
+			if (hairSelectorUI == null)
+			{
+				hairSelectorUI = new HairSelectorUI
+				{
+					enabledDefs = hairDefNames.Select(defName => DefDatabase<HairDef>.defsByName[defName]).ToHashSet()
+				};
+			}
+
+			return hairSelectorUI;
+		}
+	}
 
 	internal void ClearCache()
 	{
 		cachedHatStates.Clear();
 	}
 
-	public bool TryGetPawnHatState(Pawn pawn, ThingDef hat, out HatEnum hatEnum)
+	public bool TryGetPawnHatState(ulong flags, ThingDef hat, out HatEnum hatEnum)
 	{
-		ConditionEnum flags = ConditionEnum.None;
-		if (pawn.InBed())
+		if (!cachedHatStates.TryGetValue(hat, out Dictionary<ulong, HatEnum> hatState))
 		{
-			flags |= ConditionEnum.InBed;
-		}
-
-		if (pawn.Drafted)
-		{
-			flags |= ConditionEnum.Drafted;
-		}
-
-		if (pawn.TryGetComp(out CompCeilingDetect comp) && comp.isIndoors.GetValueOrDefault())
-		{
-			flags |= ConditionEnum.Indoors;
-		}
-
-		if (!cachedHatStates.TryGetValue(hat, out Dictionary<ConditionEnum, HatEnum> hatState))
-		{
-			cachedHatStates.Add(hat, hatState = new Dictionary<ConditionEnum, HatEnum>());
+			cachedHatStates.TryAdd(hat, hatState = new Dictionary<ulong, HatEnum>());
 		}
 
 		if (hatState.TryGetValue(flags, out hatEnum)) return true;
@@ -197,21 +157,9 @@ internal class Settings : ModSettings
 		return true;
 	}
 
-	public static bool IsHeadwear(ApparelProperties? apparelProperties)
-	{
-		if (apparelProperties is null) return false;
-		if (apparelProperties.LastLayer == ApparelLayerDefOf.Overhead ||
-		    apparelProperties.LastLayer == ApparelLayerDefOf.EyeCover)
-			return true;
-		return Enumerable.Any(apparelProperties.bodyPartGroups,
-			g => g == BodyPartGroupDefOf.FullHead || g == BodyPartGroupDefOf.UpperHead ||
-			     g == BodyPartGroupDefOf.Eyes);
-	}
-
 	internal bool onlyApplyToColonists;
 	internal bool useDontShaveHead = true;
 	internal List<SettingEntry> settingEntries = [];
-	internal readonly HashSet<HairDef> hiddenHairs = [];
 
 	internal int IndexOf(SettingEntry settingEntry)
 	{
@@ -240,8 +188,14 @@ internal class Settings : ModSettings
 	public override void ExposeData()
 	{
 		base.ExposeData();
+		if (Scribe.mode == LoadSaveMode.Saving)
+		{
+			hairDefNames = HairSelectorUI.enabledDefs.Select(hat => hat.defName).ToHashSet();
+		}
+
 		Scribe_Values.Look(ref onlyApplyToColonists, "OnlyApplyToColonists");
 		Scribe_Values.Look(ref useDontShaveHead, "UseDontShaveHead", true);
+		Scribe_Collections.Look(ref hairDefNames, "hairDefNames", LookMode.Value);
 		Scribe_Collections.Look(ref settingEntries, "settingEntries", LookMode.Deep);
 		if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
 		foreach (SettingEntry settingEntry in settingEntries)
@@ -264,7 +218,7 @@ internal class SettingEntryDialog : Window
 			hiddenSpecialFilters = DefDatabase<SpecialThingFilterDef>.AllDefsListForReading
 		};
 		parentFilter.SetDisallowAll();
-		foreach (ThingDef hat in DefDatabase<ThingDef>.AllDefs.Where(def => Settings.IsHeadwear(def.apparel)))
+		foreach (ThingDef hat in DefDatabase<ThingDef>.AllDefs.Where(def => Utils.IsHeadwear(def.apparel)))
 		{
 			parentFilter.SetAllow(hat, true);
 		}
@@ -290,18 +244,22 @@ internal class SettingEntryDialog : Window
 		listing.Begin(inRect2);
 		Listing_Standard section = listing.BeginSection(400, 3, 3);
 		Rect rect = section.GetRect(24f);
-		if (Widgets.ButtonText(new Rect(rect.x, rect.y, rect.width / 2f - 1.5f, rect.height), settingsEntry.mode))
+		if (Widgets.ButtonText(new Rect(rect.x, rect.y, rect.width / 2f - 1.5f, rect.height),
+			    $"ShowHair.{settingsEntry.mode}".Translate()))
 		{
-			settingsEntry.mode = settingsEntry.mode == "any" ? "ShowHair.All".Translate() : "ShowHair.Any".Translate();
+			settingsEntry.mode = settingsEntry.mode == "any" ? "all" : "any";
 		}
 
-		if (Widgets.ButtonText(new Rect(rect.x + rect.width / 2f + 1.5f, rect.y, rect.width / 2f - 1.5f, rect.height), settingsEntry.notMode))
+		if (Widgets.ButtonText(new Rect(rect.x + rect.width / 2f + 1.5f, rect.y, rect.width / 2f - 1.5f, rect.height),
+			    $"ShowHair.{settingsEntry.notMode}".Translate()))
 		{
-			settingsEntry.notMode = settingsEntry.notMode == "any" ? "ShowHair.All".Translate() : "ShowHair.Any".Translate();
+			settingsEntry.notMode =
+				settingsEntry.notMode == "any" ? "all" : "any";
 		}
 
 		Text.Anchor = TextAnchor.MiddleLeft;
-		foreach (ConditionEnum condition in Enum.GetValues(typeof(ConditionEnum)).Cast<ConditionEnum>().Skip(1))
+		foreach (HatConditionFlagDef flag in DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
+			         def != HatConditionFlagDefOf.None))
 		{
 			Rect rect2 = section.GetRect(20f);
 			rect2.xMin += 13f;
@@ -309,13 +267,13 @@ internal class SettingEntryDialog : Window
 			Widgets.DrawHighlightIfMouseover(rect2);
 			rect2.yMax += 5f;
 			rect2.yMin -= 5f;
-			Widgets.Label(rect2, $"ShowHair.{Enum.GetName(typeof(ConditionEnum), condition)}".Translate().Truncate(rect2.width));
+			Widgets.Label(rect2, flag.label);
 			MultiCheckboxState state;
-			if ((settingsEntry.conditions & condition) > 0)
+			if ((settingsEntry.conditions & flag) > 0)
 			{
 				state = MultiCheckboxState.On;
 			}
-			else if ((settingsEntry.notConditions & condition) > 0)
+			else if ((settingsEntry.notConditions & flag) > 0)
 			{
 				state = MultiCheckboxState.Off;
 			}
@@ -331,16 +289,16 @@ internal class SettingEntryDialog : Window
 				switch (newState)
 				{
 					case MultiCheckboxState.Off:
-						settingsEntry.conditions &= ~condition;
-						settingsEntry.notConditions |= condition;
+						settingsEntry.conditions &= ~flag;
+						settingsEntry.notConditions |= flag;
 						break;
 					case MultiCheckboxState.On:
-						settingsEntry.conditions |= condition;
-						settingsEntry.notConditions &= ~condition;
+						settingsEntry.conditions |= flag;
+						settingsEntry.notConditions &= ~flag;
 						break;
 					case MultiCheckboxState.Partial:
-						settingsEntry.conditions &= ~condition;
-						settingsEntry.notConditions &= ~condition;
+						settingsEntry.conditions &= ~flag;
+						settingsEntry.notConditions &= ~flag;
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
@@ -356,7 +314,8 @@ internal class SettingEntryDialog : Window
 				new Widgets.DropdownMenuElement<HatEnum>
 				{
 					payload = hatEnum,
-					option = new FloatMenuOption($"ShowHair.{Enum.GetName(typeof(HatEnum), hatEnum)}".Translate().ToString(),
+					option = new FloatMenuOption(
+						$"ShowHair.{Enum.GetName(typeof(HatEnum), hatEnum)}".Translate().ToString(),
 						() => settingsEntry.hatState = hatEnum)
 				}), $"ShowHair.{Enum.GetName(typeof(HatEnum), settingsEntry.hatState)}".Translate());
 		listing.NewColumn();
@@ -371,29 +330,29 @@ internal class SettingEntry : IExposable
 	private bool initialized;
 	private HashSet<string> hatDefNames = [];
 	internal Settings? settings;
-	internal ConditionEnum conditions;
+	internal ulong conditions;
 	internal string mode = "any";
-	internal ConditionEnum notConditions;
+	internal ulong notConditions;
 	internal string notMode = "any";
 	internal HatEnum hatState;
 
-	internal bool Matches(ConditionEnum pawnConditions, ThingDef hat)
+	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
 		if (!Hats.allowedDefs.Contains(hat)) return false;
-		if (conditions > ConditionEnum.None)
+		if (conditions > HatConditionFlagDefOf.None)
 		{
 			switch (mode)
 			{
-				case "any" when (pawnConditions & conditions) == ConditionEnum.None:
+				case "any" when (pawnConditions & conditions) == HatConditionFlagDefOf.None:
 				case "all" when (pawnConditions & conditions) != conditions:
 					return false;
 			}
 		}
 
-		if (notConditions == ConditionEnum.None) return true;
+		if (notConditions == HatConditionFlagDefOf.None) return true;
 		switch (notMode)
 		{
-			case "any" when (pawnConditions & notConditions) > ConditionEnum.None:
+			case "any" when (pawnConditions & notConditions) > HatConditionFlagDefOf.None:
 			case "all" when (pawnConditions & notConditions) == conditions:
 				return false;
 		}
@@ -458,15 +417,21 @@ internal class SettingEntry : IExposable
 		}
 
 		string conditionList = string.Join(", ",
-			Enum.GetValues(typeof(ConditionEnum)).Cast<ConditionEnum>()
-				.Where(condition => (condition & conditions) > ConditionEnum.None)
-				.Select(condition => Enum.GetName(typeof(ConditionEnum), condition).Colorize(Color.green)));
+			DefDatabase<HatConditionFlagDef>.AllDefs
+				.Where(def => (def & conditions) > HatConditionFlagDefOf.None)
+				.Select(def => def.label.Colorize(Color.green)));
 		string notConditionList = string.Join(", ",
-			Enum.GetValues(typeof(ConditionEnum)).Cast<ConditionEnum>()
-				.Where(condition => (condition & notConditions) > ConditionEnum.None)
-				.Select(condition => Enum.GetName(typeof(ConditionEnum), condition).Colorize(Color.red)));
+			DefDatabase<HatConditionFlagDef>.AllDefs
+				.Where(def => (def & notConditions) > HatConditionFlagDefOf.None)
+				.Select(def => def.label.Colorize(Color.red)));
 
-		Widgets.Label(new Rect(28f, 0f, rect.width - 68f, rect.height + 5f),
+		Text.Anchor = TextAnchor.UpperRight;
+		string text =
+			$"{$"ShowHair.{mode}".Translate().Colorize(Color.green)}, {$"ShowHair.{notMode}".Translate().Colorize(Color.red)}";
+		float size = Text.CalcSize(text).x;
+		Widgets.Label(new Rect(28f + rect.width - 68f - size, 0f, size, rect.height + 5f), text);
+		Text.Anchor = TextAnchor.UpperLeft;
+		Widgets.Label(new Rect(28f, 0f, rect.width - 68f - size, rect.height + 5f),
 			conditionList.Length > 0 || notConditionList.Length > 0
 				? $"{(conditionList.Length > 0 ? conditionList : "")}{(conditionList.Length > 0 && notConditionList.Length > 0 ? ", " : "")}{(notConditionList.Length > 0 ? notConditionList : "")}"
 				: (string)"ShowHair.Always".Translate());
@@ -478,12 +443,33 @@ internal class SettingEntry : IExposable
 			SoundDefOf.Click.PlayOneShotOnCamera();
 		}
 
-		WidgetRow widgetRow = new(x + width, 29, UIDirection.LeftThenUp);
+		WidgetRow widgetRow = new(x + width, 29f, UIDirection.LeftThenUp, width - 28f);
 		if (widgetRow.ButtonText($"{"Details".Translate()}..."))
 		{
 			Find.WindowStack.Add(new SettingEntryDialog(this));
 		}
 
+		const float iconSize = 20f;
+		
+		Rect rect5 = new(widgetRow.LeftX(widgetRow.FinalX - 28f), 29f, widgetRow.FinalX - 28f, 26f);
+		size = Text.CalcSize("...").x;
+		size += (rect5.width - size) % iconSize;
+		Rect rect6 = rect5.RightPartPixels(size);
+		rect5.xMax -= size;
+		int index2 = 0;
+		int maxCount = (int)(rect5.width / iconSize);
+		foreach (ThingDef def in Hats.AllowedThingDefs)
+		{
+			if (index2 == maxCount)
+			{
+				Text.Anchor = TextAnchor.LowerLeft;
+				Widgets.Label(rect6, "...");
+				Text.Anchor = TextAnchor.UpperLeft;
+				break;
+			}
+			Widgets.DefIcon(new Rect(rect5.x + index2 * iconSize, rect5.yMax - iconSize, iconSize, iconSize), def);
+			index2++;
+		}
 		Widgets.EndGroup();
 		return rect;
 	}

@@ -178,11 +178,9 @@ internal class CustomQuickSearchFilter
 			return false;
 		}
 
-		if (!cachedMatches.TryGetValue(value, out bool flag))
-		{
-			flag = MatchImpl(value);
-			cachedMatches.Add(value, flag);
-		}
+		if (cachedMatches.TryGetValue(value, out bool flag)) return flag;
+		flag = MatchImpl(value);
+		cachedMatches.Add(value, flag);
 
 		return flag;
 	}
@@ -204,7 +202,6 @@ internal class CustomQuickSearchFilter
 	private readonly LRUCache<string, bool> cachedMatches = new(5000);
 }
 
-// ReSharper disable once InconsistentNaming
 internal class Listing_HatTree(ThingFilter filter, ThingFilter parentFilter, CustomQuickSearchFilter searchFilter)
 	: Listing_Tree
 {
@@ -417,5 +414,220 @@ internal static class CustomWidgets
 		}
 
 		return multiCheckboxState;
+	}
+}
+
+[StaticConstructorOnStartup]
+internal class HairSelectorUI
+{
+	private static readonly Texture2D plus;
+	private static readonly Texture2D minus;
+
+	static HairSelectorUI()
+	{
+		plus = ContentFinder<Texture2D>.Get("UI/Buttons/Plus");
+		minus = ContentFinder<Texture2D>.Get("UI/Buttons/Minus");
+	}
+
+	internal HairSelectorUI()
+	{
+		expandedInfos = [];
+		foreach (Dialog_EditIdeoStyleItems.ItemType itemType in (Dialog_EditIdeoStyleItems.ItemType[])Enum.GetValues(
+			         typeof(Dialog_EditIdeoStyleItems.ItemType)))
+		{
+			foreach (StyleItemCategoryDef styleItemCategoryDef in DefDatabase<StyleItemCategoryDef>.AllDefs)
+			{
+				expandedInfos.Add(new Dialog_EditIdeoStyleItems.ExpandedInfo(styleItemCategoryDef, itemType,
+					styleItemCategoryDef.ItemsInCategory.Any(x => x is HairDef)));
+			}
+		}
+	}
+
+	private readonly List<Dialog_EditIdeoStyleItems.ExpandedInfo> expandedInfos;
+	private HairDef? hover;
+	private static readonly Color hairColor = PawnHairColors.ReddishBrown;
+	internal HashSet<HairDef> enabledDefs = [];
+	private readonly Dictionary<string, string> labelCache = new();
+
+	internal void DrawSection(Rect rect, ref Vector2 scrollPosition, ref float scrollViewHeight)
+	{
+		Text.Font = GameFont.Medium;
+		Text.Anchor = TextAnchor.MiddleLeft;
+		Widgets.Label(new Rect(rect.x + 10f, rect.y, rect.width, 30f), "ShowHair.HairThatWillHideHats".Translate());
+		Text.Anchor = TextAnchor.UpperLeft;
+		Text.Font = GameFont.Small;
+		rect.yMin += 30f;
+		Text.Anchor = TextAnchor.UpperLeft;
+		Text.Font = GameFont.Small;
+		rect.yMin += Text.LineHeight;
+		Widgets.BeginGroup(rect);
+		Rect viewRect = new(0f, 0f, rect.width - 16f, scrollViewHeight);
+		float curY = 0f;
+		float num = 0f;
+		Widgets.BeginScrollView(rect.AtZero(), ref scrollPosition, viewRect);
+		foreach (StyleItemCategoryDef category in DefDatabase<StyleItemCategoryDef>.AllDefs)
+		{
+			Dialog_EditIdeoStyleItems.ExpandedInfo expandedInfo = expandedInfos.FirstOrDefault(x =>
+				x.categoryDef == category && x.itemType == Dialog_EditIdeoStyleItems.ItemType.Hair);
+			if (expandedInfo is not { any: true }) continue;
+			ListHairCategory(category, ref curY, viewRect, expandedInfo, ref num);
+		}
+
+		if (Event.current.type == EventType.Layout)
+		{
+			scrollViewHeight = num;
+		}
+
+		Widgets.EndScrollView();
+		Widgets.EndGroup();
+	}
+
+	private void ListHairCategory(StyleItemCategoryDef category, ref float curY, Rect viewRect,
+		Dialog_EditIdeoStyleItems.ExpandedInfo expandedInfo, ref float scrollViewHeight)
+	{
+		Rect rect = new(viewRect.x, viewRect.y + curY, viewRect.width, 28f);
+		Widgets.DrawHighlightSelected(rect);
+		Rect rect2 = new(viewRect.x, curY, 28f, 28f);
+		GUI.DrawTexture(rect2.ContractedBy(4f), expandedInfo.expanded ? minus : plus);
+		Widgets.DrawHighlightIfMouseover(rect);
+		Rect rect3 = new(rect2.xMax + 4f, curY, 110f, 28f);
+		Text.Anchor = TextAnchor.MiddleLeft;
+		Widgets.Label(rect3, category.LabelCap);
+		Text.Anchor = TextAnchor.UpperLeft;
+		if (Widgets.ButtonInvisible(new Rect(rect2.x, rect2.y, rect2.width + rect3.width + 4f, 28f)))
+		{
+			expandedInfo.expanded = !expandedInfo.expanded;
+			if (expandedInfo.expanded)
+			{
+				SoundDefOf.Tick_High.PlayOneShotOnCamera();
+			}
+			else
+			{
+				SoundDefOf.Tick_Low.PlayOneShotOnCamera();
+			}
+		}
+
+		bool any = false;
+		bool all = true;
+		foreach (HairDef item3 in category.ItemsInCategory.OfType<HairDef>())
+		{
+			if (enabledDefs.Contains(item3))
+			{
+				any = true;
+			}
+			else
+			{
+				all = false;
+				if (any) break;
+			}
+		}
+
+		MultiCheckboxState state = all ? MultiCheckboxState.On :
+			any ? MultiCheckboxState.Partial : MultiCheckboxState.Off;
+		float paddingSize = rect.height / 2f - 12f;
+		MultiCheckboxState newState =
+			Widgets.CheckboxMulti(new Rect(rect.xMax - paddingSize - 24f, rect.y + paddingSize, 24f, 24f), state, true);
+		if (newState != state)
+		{
+			switch (newState)
+			{
+				case MultiCheckboxState.Off:
+				{
+					foreach (HairDef item3 in category.ItemsInCategory.OfType<HairDef>())
+					{
+						enabledDefs.Remove(item3);
+					}
+
+					break;
+				}
+				case MultiCheckboxState.On:
+				{
+					foreach (HairDef item3 in category.ItemsInCategory.OfType<HairDef>())
+					{
+						enabledDefs.Add(item3);
+					}
+
+					break;
+				}
+			}
+		}
+
+		scrollViewHeight += rect.height;
+		curY += rect.height;
+		if (expandedInfo.expanded)
+		{
+			int num = 0;
+			foreach (HairDef item3 in category.ItemsInCategory.OfType<HairDef>().Where(def => def != HairDefOf.Bald))
+			{
+				ListHair(item3, ref curY, num, viewRect);
+				num++;
+			}
+
+			scrollViewHeight += num * 28f;
+		}
+
+		scrollViewHeight += 4f;
+		curY += 4f;
+	}
+
+	private void ListHair(HairDef hair, ref float curY, int index, Rect viewRect)
+	{
+		Rect rect = new(viewRect.x + 17f, viewRect.y + curY, viewRect.width - 17f, 28f);
+		if (index % 2 == 1)
+		{
+			Widgets.DrawLightHighlight(new Rect(rect.x + 28f, rect.y, rect.width - 28f, rect.height));
+		}
+
+		if (Mouse.IsOver(rect))
+		{
+			hover = hair;
+			Rect r = new(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y, 100f,
+				100f + Text.LineHeight);
+			Find.WindowStack.ImmediateWindow(12918217, r, WindowLayer.Super, delegate
+			{
+				Rect rect5 = r.AtZero();
+				rect5.height -= Text.LineHeight;
+				Widgets.DrawHighlight(rect5);
+				if (hover == null) return;
+				Text.Anchor = TextAnchor.UpperCenter;
+				Widgets.LabelFit(new Rect(0f, rect5.yMax, rect5.width, Text.LineHeight), hover.LabelCap);
+				Text.Anchor = TextAnchor.UpperLeft;
+				GUI.color = hairColor;
+				rect5.y += 10f;
+
+				Widgets.DefIcon(rect5, hover, null, 1.1f);
+				GUI.color = Color.white;
+			});
+		}
+
+		Widgets.DrawHighlightIfMouseover(rect);
+		Rect rect2 = new(rect.x, curY, 28f, 28f);
+		Rect rect3 = rect2.ContractedBy(2f);
+		Widgets.DrawHighlight(rect3);
+		GUI.color = hairColor;
+
+		Widgets.DefIcon(rect2, hair, null, 1.25f);
+		GUI.color = Color.white;
+		Rect rect4 = new(rect2.xMax + 4f, curY, 110f, 28f);
+		Text.Anchor = TextAnchor.MiddleLeft;
+		Widgets.Label(rect4, GenText.Truncate(hair.LabelCap, rect4.width, labelCache));
+		Text.Anchor = TextAnchor.UpperLeft;
+		bool state = enabledDefs.Contains(hair);
+		bool oldState = state;
+		float paddingSize = rect.height / 2f - 12f;
+		Widgets.Checkbox(rect.xMax - paddingSize - 24f, rect.y + paddingSize, ref state, paintable: true);
+		if (state != oldState)
+		{
+			if (state)
+			{
+				enabledDefs.Add(hair);
+			}
+			else
+			{
+				enabledDefs.Remove(hair);
+			}
+		}
+
+		curY += 28f;
 	}
 }

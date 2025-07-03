@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Defs>
+    <ShowHair.HatConditionFlagDef>
+        <defName>None</defName>
+    </ShowHair.HatConditionFlagDef>
+
+    <ShowHair.HatConditionFlagDef>
+        <defName>InBed</defName>
+        <label>In Bed</label>
+		<workerClass>ShowHair.HatConditionWorkerInBed</workerClass>
+    </ShowHair.HatConditionFlagDef>
+
+    <ShowHair.HatConditionFlagDef>
+        <defName>Drafted</defName>
+        <label>Drafted</label>
+        <workerClass>ShowHair.HatConditionWorkerDrafted</workerClass>
+    </ShowHair.HatConditionFlagDef>
+
+    <ShowHair.HatConditionFlagDef>
+        <defName>Indoors</defName>
+        <label>Indoors</label>
+        <workerClass>ShowHair.HatConditionWorkerIndoors</workerClass>
+    </ShowHair.HatConditionFlagDef>
+    
+    <ShowHair.HatConditionFlagDef>
+        <defName>InHomeArea</defName>
+        <label>In Home Area</label>
+        <workerClass>ShowHair.HatConditionWorkerInHomeArea</workerClass>
+    </ShowHair.HatConditionFlagDef>
+    
+    <ShowHair.HatConditionFlagDef>
+        <defName>Meditating</defName>
+        <label>Meditating</label>
+        <workerClass>ShowHair.HatConditionWorkerMeditating</workerClass>
+    </ShowHair.HatConditionFlagDef>
+    
+    <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.odyssey">
+        <defName>InVacuum</defName>
+        <label>In Vacuum</label>
+        <workerClass>ShowHair.HatConditionWorkerInVacuum</workerClass>
+    </ShowHair.HatConditionFlagDef>
+</Defs>

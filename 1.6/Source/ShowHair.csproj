@@ -11,11 +11,29 @@
 		<Publicize Include="Assembly-CSharp"/>
 	</ItemGroup>
 	<ItemGroup>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.IMGuiModule">
+			<HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.IMGuiModule.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup Condition="'@(Reference->WithMetadataValue('Identity', 'Assembly-CSharp')->Metadata('HintPath')->Exists())' == ''">
+		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*-*" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4498-beta" />
+		<!--<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*-*" />-->
 		<PackageReference Include="Lib.Harmony" Version="2.3.6">
 			<ExcludeAssets>runtime</ExcludeAssets>
 		</PackageReference>
