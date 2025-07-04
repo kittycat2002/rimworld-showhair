@@ -25,5 +25,5 @@ public class HatConditionFlagDef : Def
 	
 	private HatConditionWorker? workerInt;
 	
-	public HatConditionWorker Worker => workerInt ??= (HatConditionWorker)Activator.CreateInstance(workerClass!);
+	public HatConditionWorker Worker => workerInt ??= (HatConditionWorker)Activator.CreateInstance(workerClass ?? throw new NullReferenceException($"Null workerClass in HatConditionFlagDef: {defName}"));
 }

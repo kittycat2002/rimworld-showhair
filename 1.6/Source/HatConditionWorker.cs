@@ -18,22 +18,45 @@ public class HatConditionWorkerDrafted : HatConditionWorker
 	public override bool ConditionIsMet(Pawn pawn) => pawn.Drafted;
 }
 
-public class HatConditionWorkerIndoors : HatConditionWorker
+public abstract class HatConditionWorkerCached : HatConditionWorker
 {
-	public override bool ConditionIsMet(Pawn pawn) => pawn.TryGetComp(out CompCeilingDetect comp) && comp.isIndoors;
+	protected virtual int CacheExpirationTime => 250;
+
+	public sealed override bool ConditionIsMet(Pawn pawn)
+	{
+		if (!pawn.RaceProps.Humanlike || !pawn.SpawnedOrAnyParentSpawned || (ShowHairMod.Settings.onlyApplyToColonists && !pawn.Faction.IsPlayerSafe())) return false;
+		CacheEntry cacheEntry = Utils.pawnCache.GetOrAdd(pawn.thingIDNumber, new CacheEntry());
+		if (cacheEntry.conditionWorkers.TryGetValue(GetType(), out (int, bool) condition))
+		{
+			if (condition.Item1 > GenTicks.TicksGame)
+			{
+				return condition.Item2;
+			}
+		}
+		bool conditionIsMet = ConditionIsMetCached(pawn);
+		cacheEntry.conditionWorkers[GetType()] = (GenTicks.TicksGame + CacheExpirationTime, conditionIsMet);
+		return conditionIsMet;
+	}
+
+	protected abstract bool ConditionIsMetCached(Pawn pawn);
 }
 
-public class HatConditionWorkerInHomeArea : HatConditionWorker
+public class HatConditionWorkerIndoors : HatConditionWorkerCached
 {
-	public override bool ConditionIsMet(Pawn pawn) => pawn.TryGetComp(out CompCeilingDetect comp) && comp.isInHomeArea;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().OpenRoofCountStopAt(1) == 0;
 }
 
-public class HatConditionWorkerMeditating : HatConditionWorker
+public class HatConditionWorkerInHomeArea : HatConditionWorkerCached
 {
-	public override bool ConditionIsMet(Pawn pawn) => pawn.psychicEntropy.IsCurrentlyMeditating;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.MapHeld.areaManager.Home[pawn.PositionHeld];
 }
 
-public class HatConditionWorkerIsInVacuum : HatConditionWorker
+public class HatConditionWorkerMeditating : HatConditionWorkerCached
 {
-	public override bool ConditionIsMet(Pawn pawn) => pawn.TryGetComp(out CompCeilingDetect comp) && comp.isInVacuum;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.psychicEntropy.IsCurrentlyMeditating;
+}
+
+public class HatConditionWorkerIsInVacuum : HatConditionWorkerCached
+{
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().Vacuum > 0;
 }

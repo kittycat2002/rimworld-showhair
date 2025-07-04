@@ -38,6 +38,6 @@
     <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.odyssey">
         <defName>InVacuum</defName>
         <label>In Vacuum</label>
-        <workerClass>ShowHair.HatConditionWorkerInVacuum</workerClass>
+        <workerClass>ShowHair.HatConditionWorkerCachedInVacuum</workerClass>
     </ShowHair.HatConditionFlagDef>
 </Defs>

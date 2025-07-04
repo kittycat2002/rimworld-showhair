@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using RimWorld;
 using UnityEngine;
@@ -7,25 +8,25 @@ using Verse;
 namespace ShowHair;
 
 [UsedImplicitly]
-public class PawnRenderSubWorkerHair : PawnRenderSubWorker
+internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 {
 	public override void EditMaterial(PawnRenderNode node, PawnDrawParms parms, ref Material material)
 	{
-		if (!Cache.hatStateDictionary.TryGetValue(parms.pawn.thingIDNumber, out HatStateParms hatStateParms)) return;
+		if (!Utils.pawnCache.TryGetValue(parms.pawn.thingIDNumber, out CacheEntry cacheEntry) ||
+		    !cacheEntry.hatStateParms.HasValue ||
+		    (cacheEntry.fullGraphic == null && cacheEntry.upperGraphic == null)) return;
+		HatStateParms hatStateParms = cacheEntry.hatStateParms.Value;
 		if (!hatStateParms.enabled) return;
 		BodyPartGroupDef? coverage = parms.pawn.HeadCoverage();
-		if (coverage == null) return;
-		if (!Cache.extraHairGraphicsDictionary.TryGetValue(parms.pawn.thingIDNumber, out (Graphic_Multi?, Graphic_Multi?) graphics)) return;
-		
 		if (coverage == BodyPartGroupDefOf.UpperHead)
 		{
-			Material? newMaterial = graphics.Item1?.NodeGetMat(parms);
+			Material? newMaterial = cacheEntry.upperGraphic?.NodeGetMat(parms);
 			if (newMaterial != null)
 				material = newMaterial;
 		}
 		else if (coverage == BodyPartGroupDefOf.FullHead)
 		{
-			Material? newMaterial = graphics.Item2?.NodeGetMat(parms);
+			Material? newMaterial = cacheEntry.fullGraphic?.NodeGetMat(parms);
 			if (newMaterial != null)
 				material = newMaterial;
 		}
@@ -34,41 +35,42 @@ public class PawnRenderSubWorkerHair : PawnRenderSubWorker
 	public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)
 	{
 		if (parms.pawn.apparel == null || !PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(parms)) return true;
-		if (!Cache.hatStateDictionary.TryGetValue(parms.pawn.thingIDNumber, out HatStateParms hatStateParms)) return true;
+		if (!Utils.pawnCache.TryGetValue(parms.pawn.thingIDNumber, out CacheEntry cacheEntry) ||
+		    !cacheEntry.hatStateParms.HasValue) return true;
+		HatStateParms hatStateParms = cacheEntry.hatStateParms.Value;
 		if (!hatStateParms.enabled) return true;
-		bool upperHead = false;
-		foreach (Apparel apparel in parms.pawn.apparel.WornApparel)
+		bool hasHat = false;
+		foreach (Apparel apparel in parms.pawn.apparel.WornApparel.Where(apparel =>
+			         Utils.IsHeadwear(apparel.def.apparel)))
 		{
-			if (!Utils.IsHeadwear(apparel.def.apparel) ||
-			    !ShowHairMod.Settings.TryGetPawnHatState(hatStateParms.flags, apparel.def, out HatEnum hatEnum))
-				continue;
-			switch (hatEnum)
+			switch (ShowHairMod.Settings.GetHatState(hatStateParms.flags, apparel.def))
 			{
 				case HatEnum.HidesAllHair:
 					return false;
 				case HatEnum.ShowsHair:
-					upperHead = true;
+					hasHat = true;
 					break;
 			}
 		}
 
-		if (upperHead)
+		if (hasHat)
 		{
-			return parms.pawn.story != null && !ShowHairMod.Settings.HairSelectorUI.enabledDefs.Contains(parms.pawn.story.hairDef);
+			return parms.pawn.story != null &&
+			       !ShowHairMod.Settings.HairSelectorUI.enabledDefs.Contains(parms.pawn.story.hairDef);
 		}
 
 		return true;
 	}
 }
 
-public class PawnRenderSubWorkerHat : PawnRenderSubWorker
+internal class PawnRenderSubWorkerHat : PawnRenderSubWorker
 {
 	public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)
 	{
-		if (!Cache.hatStateDictionary.TryGetValue(parms.pawn.thingIDNumber, out HatStateParms hatStateParms)) return true;
-		if (hatStateParms.enabled && node.apparel != null &&
-		    ShowHairMod.Settings.TryGetPawnHatState(hatStateParms.flags, node.apparel.def, out HatEnum hatEnum))
-			return hatEnum != HatEnum.HideHat;
-		return true;
+		if (!Utils.pawnCache.TryGetValue(parms.pawn.thingIDNumber, out CacheEntry cacheEntry) ||
+		    !cacheEntry.hatStateParms.HasValue) return true;
+		HatStateParms hatStateParms = cacheEntry.hatStateParms.Value;
+		if (!hatStateParms.enabled || node.apparel == null) return true;
+		return ShowHairMod.Settings.GetHatState(hatStateParms.flags, node.apparel.def) != HatEnum.HideHat;
 	}
 }

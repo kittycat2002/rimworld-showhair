@@ -25,54 +25,58 @@ internal class HarmonyPatches
 [HarmonyPatch]
 internal static class Pawn_Removed_Patch
 {
-	internal static IEnumerable<MethodInfo> TargetMethods()
+	private static IEnumerable<MethodInfo> TargetMethods()
 	{
 		yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.DeSpawn));
 		yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Destroy));
 	}
-	internal static void Postfix(Pawn __instance)
+
+	private static void Postfix(Pawn __instance)
 	{
-		Cache.hatStateDictionary.Remove(__instance.thingIDNumber);
-		Cache.extraHairGraphicsDictionary.Remove(__instance.thingIDNumber);
+		Utils.pawnCache.TryRemove(__instance.thingIDNumber, out _);
 	}
 }
 
 [HarmonyPatch(typeof(MemoryUtility), nameof(MemoryUtility.ClearAllMapsAndWorld))]
 internal static class MemoryUtility_ClearAllMapsAndWorld_Patch
 {
-	internal static void Postfix()
+	private static void Postfix()
 	{
-		Cache.hatStateDictionary.Clear();
-		Cache.extraHairGraphicsDictionary.Clear();
+		Utils.pawnCache.Clear();
 	}
 }
 
 [HarmonyPatch(typeof(Corpse), nameof(Corpse.DeSpawn))]
 internal static class Corpse_DeSpawn_Patch
 {
-	internal static void Postfix(Corpse __instance)
+	private static void Postfix(Corpse __instance)
 	{
-		Cache.hatStateDictionary.Remove(__instance.InnerPawn.thingIDNumber);
-		Cache.extraHairGraphicsDictionary.Remove(__instance.InnerPawn.thingIDNumber);
+		Utils.pawnCache.TryRemove(__instance.InnerPawn.thingIDNumber, out _);
 	}
 }
 
 [HarmonyPatch(typeof(PawnRenderTree), nameof(PawnRenderTree.AdjustParms))]
 internal static class PawnRenderTree_AdjustParms_Patch
 {
-	internal static void Prefix(PawnRenderTree __instance)
+	private static void Prefix(PawnRenderTree __instance)
 	{
-		if (!Cache.hatStateDictionary.TryGetValue(__instance.pawn.thingIDNumber, out HatStateParms oldParms))
+		CacheEntry cacheEntry = Utils.pawnCache.GetOrAdd(__instance.pawn.thingIDNumber, _ => new CacheEntry());
+		if (!cacheEntry.hatStateParms.HasValue)
 		{
 			__instance.rootNode.requestRecache = true;
-			Cache.hatStateDictionary[__instance.pawn.thingIDNumber] = __instance.pawn.GetHatStateParms();
+			cacheEntry.hatStateParms = __instance.pawn.GetHatStateParms();
+			return;
 		}
+
+		HatStateParms oldParms = cacheEntry.hatStateParms.Value;
 		HatStateParms parms = __instance.pawn.GetHatStateParms();
 		if (oldParms.enabled == parms.enabled && oldParms.flags == parms.flags) return;
 		__instance.rootNode.requestRecache = true;
-		Cache.hatStateDictionary[__instance.pawn.thingIDNumber] = parms;
+		cacheEntry.hatStateParms = parms;
 	}
-	internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
+
+	[HarmonyDebug]
+	private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
 		ILGenerator generator)
 	{
 		CodeMatcher codeMatcher = new(instructions, generator);
@@ -83,15 +87,19 @@ internal static class PawnRenderTree_AdjustParms_Patch
 			new CodeMatch(OpCodes.Brfalse)
 		);
 		codeMatcher.ThrowIfInvalid("Could not find HeadgearVisible");
+		codeMatcher.DeclareLocal(typeof(CacheEntry), out LocalBuilder cacheEntryVariable);
 		codeMatcher.DeclareLocal(typeof(HatStateParms), out LocalBuilder hatStateParmsVariable);
 		codeMatcher.Advance(1); // Replace with InsertAfter, this is just for Remodder
-		;
 		codeMatcher.InsertAndAdvance(
-			CodeInstruction.LoadField(typeof(Cache), nameof(Cache.hatStateDictionary)),
+			CodeInstruction.LoadField(typeof(Utils), nameof(Utils.pawnCache)),
 			CodeInstruction.LoadArgument(0),
 			CodeInstruction.LoadField(typeof(PawnRenderTree), nameof(PawnRenderTree.pawn)),
 			CodeInstruction.LoadField(typeof(Pawn), nameof(Pawn.thingIDNumber)),
-			new CodeInstruction(OpCodes.Callvirt, AccessTools.IndexerGetter(typeof(Dictionary<int, HatStateParms>), [typeof(int)])),
+			new CodeInstruction(OpCodes.Newobj, AccessTools.Constructor(typeof(CacheEntry))),
+			new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(ConcurrentDictionary<int, CacheEntry>),
+				nameof(ConcurrentDictionary<,>.GetOrAdd), [typeof(int), typeof(CacheEntry)])),
+			CodeInstruction.LoadField(typeof(CacheEntry), nameof(CacheEntry.hatStateParms), true),
+			CodeInstruction.Call(typeof(HatStateParms?), "GetValueOrDefault"),
 			CodeInstruction.StoreLocal(hatStateParmsVariable.LocalIndex)
 		);
 		codeMatcher.MatchStartForward(new CodeMatch(OpCodes.Stloc_1));
@@ -106,8 +114,8 @@ internal static class PawnRenderTree_AdjustParms_Patch
 			CodeInstruction.LoadField(typeof(HatStateParms), nameof(HatStateParms.flags)),
 			CodeInstruction.LoadLocal(1),
 			CodeInstruction.LoadField(typeof(Apparel), nameof(Apparel.def)),
-			CodeInstruction.LoadLocal(hatEnumVariable.LocalIndex, true),
-			CodeInstruction.Call(typeof(Settings), nameof(Settings.TryGetPawnHatState)),
+			CodeInstruction.Call(typeof(Settings), nameof(Settings.GetHatState)),
+			CodeInstruction.StoreLocal(hatEnumVariable.LocalIndex),
 			CodeInstruction.LoadLocal(hatStateParmsVariable.LocalIndex),
 			CodeInstruction.LoadLocal(hatEnumVariable.LocalIndex),
 			CodeInstruction.Call(typeof(PawnRenderTree_AdjustParms_Patch), nameof(ShouldDrawApparel)),
@@ -233,7 +241,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 [HarmonyPatch(typeof(DynamicPawnRenderNodeSetup_Apparel), nameof(DynamicPawnRenderNodeSetup_Apparel.ProcessApparel))]
 internal static class DynamicPawnRenderNodeSetup_Apparel_ProcessApparel_Patch
 {
-	internal static IEnumerable<ValueTuple<PawnRenderNode?, PawnRenderNode>> Postfix(
+	private static IEnumerable<ValueTuple<PawnRenderNode?, PawnRenderNode>> Postfix(
 		IEnumerable<ValueTuple<PawnRenderNode?, PawnRenderNode>> nodes)
 	{
 		foreach ((PawnRenderNode?, PawnRenderNode) node in nodes)
@@ -252,7 +260,7 @@ internal static class DynamicPawnRenderNodeSetup_Apparel_ProcessApparel_Patch
 [HarmonyPatch(typeof(HairDef), nameof(HairDef.GraphicFor))]
 internal static class HairDef_GraphicFor_Patch
 {
-	internal static void Postfix(HairDef __instance, Pawn pawn, Color color)
+	private static void Postfix(HairDef __instance, Pawn pawn, Color color)
 	{
 		if (__instance.noGraphic)
 		{
@@ -269,14 +277,12 @@ internal static class HairDef_GraphicFor_Patch
 		                  ContentFinder<Texture2D>.Get($"{texPath}/FullHead_east", false) != null ||
 		                  ContentFinder<Texture2D>.Get($"{texPath}/FullHead_south", false) != null ||
 		                  ContentFinder<Texture2D>.Get($"{texPath}/FullHead_west", false) != null;
-		Cache.extraHairGraphicsDictionary[pawn.thingIDNumber] = (
-			upperExists
-				? (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>($"{texPath}/UpperHead",
-					overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color)
-				: null,
-			fullExists
-				? (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>($"{texPath}/FullHead",
-					overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color)
-				: null);
+		CacheEntry cacheEntry = Utils.pawnCache.GetOrAdd(pawn.thingIDNumber, new CacheEntry());
+		if (upperExists)
+			cacheEntry.upperGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>($"{texPath}/UpperHead",
+				overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
+		if (fullExists)
+			cacheEntry.fullGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_Multi>($"{texPath}/FullHead",
+				overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
 	}
 }

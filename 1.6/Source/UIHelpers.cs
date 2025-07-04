@@ -205,7 +205,7 @@ internal class CustomQuickSearchFilter
 internal class Listing_HatTree(ThingFilter filter, ThingFilter parentFilter, CustomQuickSearchFilter searchFilter)
 	: Listing_Tree
 {
-	public void ListCategoryChildren(TreeNode_ThingCategory node, int openMask, Rect visibleRect2)
+	internal void ListCategoryChildren(TreeNode_ThingCategory node, int openMask, Rect visibleRect2)
 	{
 		visibleRect = visibleRect2;
 
@@ -374,14 +374,14 @@ internal class Listing_HatTree(ThingFilter filter, ThingFilter parentFilter, Cus
 		return visibleRect.Overlaps(rect);
 	}
 
-	public int matchCount;
+	internal int matchCount;
 
 	private Rect visibleRect;
 }
 
 internal static class CustomWidgets
 {
-	public static MultiCheckboxState CheckboxMulti(Rect rect, MultiCheckboxState state)
+	internal static MultiCheckboxState CheckboxMulti(Rect rect, MultiCheckboxState state)
 	{
 		Texture2D texture2D = state switch
 		{

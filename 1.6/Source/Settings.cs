@@ -11,7 +11,7 @@ using Verse.Sound;
 
 namespace ShowHair;
 
-internal enum HatEnum
+public enum HatEnum
 {
 	HideHat,
 	ShowsHair,
@@ -123,15 +123,10 @@ internal class Settings : ModSettings
 	{
 		get
 		{
-			if (hairSelectorUI == null)
+			return hairSelectorUI ??= new HairSelectorUI
 			{
-				hairSelectorUI = new HairSelectorUI
-				{
-					enabledDefs = hairDefNames.Select(defName => DefDatabase<HairDef>.defsByName[defName]).ToHashSet()
-				};
-			}
-
-			return hairSelectorUI;
+				enabledDefs = hairDefNames.Select(defName => DefDatabase<HairDef>.defsByName[defName]).ToHashSet()
+			};
 		}
 	}
 
@@ -140,21 +135,18 @@ internal class Settings : ModSettings
 		cachedHatStates.Clear();
 	}
 
-	public bool TryGetPawnHatState(ulong flags, ThingDef hat, out HatEnum hatEnum)
+	internal HatEnum GetHatState(ulong flags, ThingDef hat)
 	{
-		if (!cachedHatStates.TryGetValue(hat, out Dictionary<ulong, HatEnum> hatState))
-		{
-			cachedHatStates.TryAdd(hat, hatState = new Dictionary<ulong, HatEnum>());
-		}
+		Dictionary<ulong, HatEnum> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, HatEnum>());
 
-		if (hatState.TryGetValue(flags, out hatEnum)) return true;
+		if (hatState.TryGetValue(flags, out HatEnum hatEnum)) return hatEnum;
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
 		if (settingEntry != null)
 		{
-			hatState.Add(flags, hatEnum = settingEntry.hatState);
+			hatState.Add(flags, settingEntry.hatState);
 		}
 
-		return true;
+		return hatEnum;
 	}
 
 	internal bool onlyApplyToColonists;
@@ -176,7 +168,7 @@ internal class Settings : ModSettings
 		settingEntries.Remove(settingEntry);
 	}
 
-	public void Reorder(SettingEntry settingEntry, int offset)
+	internal void Reorder(SettingEntry settingEntry, int offset)
 	{
 		int num = settingEntries.IndexOf(settingEntry);
 		num += offset;
