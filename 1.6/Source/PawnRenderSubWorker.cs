@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using JetBrains.Annotations;
 using RimWorld;
 using UnityEngine;
@@ -12,12 +11,13 @@ internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 {
 	public override void EditMaterial(PawnRenderNode node, PawnDrawParms parms, ref Material material)
 	{
+		if (!ShowHairMod.Settings.useDontShaveHead) return;
 		if (!Utils.pawnCache.TryGetValue(parms.pawn.thingIDNumber, out CacheEntry cacheEntry) ||
 		    !cacheEntry.hatStateParms.HasValue ||
 		    (cacheEntry.fullGraphic == null && cacheEntry.upperGraphic == null)) return;
 		HatStateParms hatStateParms = cacheEntry.hatStateParms.Value;
 		if (!hatStateParms.enabled) return;
-		BodyPartGroupDef? coverage = parms.pawn.HeadCoverage();
+		BodyPartGroupDef? coverage = parms.pawn.HeadCoverage(true);
 		if (coverage == BodyPartGroupDefOf.UpperHead)
 		{
 			Material? newMaterial = cacheEntry.upperGraphic?.NodeGetMat(parms);

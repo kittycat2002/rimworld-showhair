@@ -58,5 +58,5 @@ public class HatConditionWorkerMeditating : HatConditionWorkerCached
 
 public class HatConditionWorkerIsInVacuum : HatConditionWorkerCached
 {
-	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().Vacuum > 0;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().Vacuum > 0f;
 }

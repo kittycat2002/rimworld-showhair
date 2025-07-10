@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -51,7 +50,8 @@ internal static class Corpse_DeSpawn_Patch
 {
 	private static void Postfix(Corpse __instance)
 	{
-		Utils.pawnCache.TryRemove(__instance.InnerPawn.thingIDNumber, out _);
+		if (__instance.InnerPawn?.thingIDNumber != null)
+			Utils.pawnCache.TryRemove(__instance.InnerPawn.thingIDNumber, out _);
 	}
 }
 
@@ -75,7 +75,6 @@ internal static class PawnRenderTree_AdjustParms_Patch
 		cacheEntry.hatStateParms = parms;
 	}
 
-	[HarmonyDebug]
 	private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
 		ILGenerator generator)
 	{
@@ -90,7 +89,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 		codeMatcher.DeclareLocal(typeof(CacheEntry), out LocalBuilder cacheEntryVariable);
 		codeMatcher.DeclareLocal(typeof(HatStateParms), out LocalBuilder hatStateParmsVariable);
 		codeMatcher.Advance(1); // Replace with InsertAfter, this is just for Remodder
-		codeMatcher.InsertAndAdvance(
+		codeMatcher.InsertAfterAndAdvance(
 			CodeInstruction.LoadField(typeof(Utils), nameof(Utils.pawnCache)),
 			CodeInstruction.LoadArgument(0),
 			CodeInstruction.LoadField(typeof(PawnRenderTree), nameof(PawnRenderTree.pawn)),
@@ -106,8 +105,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 		codeMatcher.ThrowIfInvalid("Could not find start of loop");
 		codeMatcher.DeclareLocal(typeof(HatEnum), out LocalBuilder hatEnumVariable);
 		codeMatcher.DefineLabel(out Label labelEnd);
-		codeMatcher.Advance(1);
-		codeMatcher.InsertAndAdvance(
+		codeMatcher.InsertAfterAndAdvance(
 			new CodeInstruction(OpCodes.Call,
 				AccessTools.PropertyGetter(typeof(ShowHairMod), nameof(ShowHairMod.Settings))),
 			CodeInstruction.LoadLocal(hatStateParmsVariable.LocalIndex),

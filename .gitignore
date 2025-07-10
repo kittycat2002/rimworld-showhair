@@ -4,5 +4,3 @@ obj
 Thumbs.db
 .idea
 *.DotSettings.user
-*.dll
-*.pdb

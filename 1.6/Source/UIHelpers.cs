@@ -137,7 +137,7 @@ internal class CustomQuickSearchWidget
 
 	private bool CurrentlyFocused()
 	{
-		return GUI.GetNameOfFocusedControl() == this.controlName;
+		return GUI.GetNameOfFocusedControl() == controlName;
 	}
 
 	internal readonly CustomQuickSearchFilter filter = new();

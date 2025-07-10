@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using RimWorld;
@@ -61,6 +60,7 @@ internal class ShowHairMod : Mod
 	{
 		base.WriteSettings();
 		settings?.ClearCache();
+		Utils.ConditionFlagDefsEnabled = settings?.GetEnabledConditions() ?? Utils.ConditionFlagDefsEnabled;
 		PortraitsCache.Clear();
 		GlobalTextureAtlasManager.FreeAllRuntimeAtlases();
 	}
@@ -113,7 +113,7 @@ internal class ShowHairMod : Mod
 
 internal class Settings : ModSettings
 {
-	private readonly ConcurrentDictionary<ThingDef, Dictionary<ulong, HatEnum>> cachedHatStates = new();
+	private readonly ConcurrentDictionary<ThingDef, Dictionary<ulong, (HatEnum, bool)>> cachedHatStates = new();
 
 	private HairSelectorUI? hairSelectorUI;
 
@@ -134,19 +134,38 @@ internal class Settings : ModSettings
 	{
 		cachedHatStates.Clear();
 	}
+	
+	internal IEnumerable<HatConditionFlagDef> GetEnabledConditions()
+	{
+		return DefDatabase<HatConditionFlagDef>.AllDefs.Where(def => def != HatConditionFlagDefOf.None && settingEntries.Any(entry => (def & (entry.conditions | entry.notConditions)) > HatConditionFlagDefOf.None));
+	}
 
 	internal HatEnum GetHatState(ulong flags, ThingDef hat)
 	{
-		Dictionary<ulong, HatEnum> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, HatEnum>());
+		Dictionary<ulong, (HatEnum, bool)> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
 
-		if (hatState.TryGetValue(flags, out HatEnum hatEnum)) return hatEnum;
+		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item1;
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
 		if (settingEntry != null)
 		{
-			hatState.Add(flags, settingEntry.hatState);
+			hatState.Add(flags, (settingEntry.hatState, settingEntry.useDontShaveHead));
 		}
 
-		return hatEnum;
+		return hatTuple.Item1;
+	}
+	
+	internal bool GetHatDontShaveHead(ulong flags, ThingDef hat)
+	{
+		Dictionary<ulong, (HatEnum, bool)> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
+
+		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item2;
+		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
+		if (settingEntry != null)
+		{
+			hatState.Add(flags, (settingEntry.hatState, settingEntry.useDontShaveHead));
+		}
+
+		return hatTuple.Item2;
 	}
 
 	internal bool onlyApplyToColonists;
@@ -310,6 +329,7 @@ internal class SettingEntryDialog : Window
 						$"ShowHair.{Enum.GetName(typeof(HatEnum), hatEnum)}".Translate().ToString(),
 						() => settingsEntry.hatState = hatEnum)
 				}), $"ShowHair.{Enum.GetName(typeof(HatEnum), settingsEntry.hatState)}".Translate());
+		listing.CheckboxLabeled($"ShowHair.UseDontShaveHead".Translate(), ref settingsEntry.useDontShaveHead);
 		listing.NewColumn();
 		Rect rect5 = listing.GetRect(listing.listingRect.height - listing.CurHeight);
 		CustomThingFilterUI.DoThingFilterConfigWindow(rect5, thingFilterState, settingsEntry.Hats, parentFilter);
@@ -327,6 +347,7 @@ internal class SettingEntry : IExposable
 	internal ulong notConditions;
 	internal string notMode = "any";
 	internal HatEnum hatState;
+	internal bool useDontShaveHead = true;
 
 	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
@@ -479,5 +500,6 @@ internal class SettingEntry : IExposable
 		Scribe_Values.Look(ref notMode, "notMode", "any");
 		Scribe_Values.Look(ref hatState, "hatState");
 		Scribe_Collections.Look(ref hatDefNames, "hatDefNames", LookMode.Value);
+		Scribe_Values.Look(ref useDontShaveHead, "useDontShaveHead", true);
 	}
 }
