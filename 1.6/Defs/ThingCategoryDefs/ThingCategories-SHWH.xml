@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<ThingCategoryDef>
+		<defName>NGXYZ_HatRoot</defName>
+		<label>hats</label>
+	</ThingCategoryDef>
+	<ThingCategoryDef>
+		<defName>NGXYZ_Hat_Other</defName>
+		<label>other</label>
+		<parent>NGXYZ_HatRoot</parent>
+	</ThingCategoryDef>
+</Defs>

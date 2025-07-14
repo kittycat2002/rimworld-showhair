@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
+using HarmonyLib;
 using JetBrains.Annotations;
 using RimWorld;
 using UnityEngine;
@@ -23,6 +25,7 @@ public enum HatEnum
 internal class ShowHairMod : Mod
 {
 	private static Settings? settings;
+	internal static Harmony? harmony;
 	private Vector2 scrollPositionSettingsEntries = new(0f, 0f);
 	private float viewHeightSettingsEntries = 1000f;
 	private Vector2 scrollPositionHairSection = new(0f, 0f);
@@ -43,9 +46,11 @@ internal class ShowHairMod : Mod
 
 	public ShowHairMod(ModContentPack content) : base(content)
 	{
-		if (ParseHelper.Parsers<ulong>.parser == null)
+		harmony = new Harmony("cat2002.showhair");
+		harmony.PatchCategory("ModInitialization");
+		if (!ParseHelper.HandlesType(typeof(Version)))
 		{
-			ParseHelper.Parsers<ulong>.Register(ulong.Parse);
+			ParseHelper.Parsers<Version>.Register(Version.Parse);
 		}
 
 		settings = GetSettings<Settings>();
@@ -86,9 +91,9 @@ internal class ShowHairMod : Mod
 
 	private void DrawSettingEntries(Listing_Standard listing)
 	{
-		if (listing.ButtonText("Add Setting Entry"))
+		if (listing.ButtonText("ShowHair.AddSettingEntry".Translate().TrimMultiline()))
 		{
-			Settings.AddEntry(new SettingEntry(Settings));
+			Settings.AddEntry(new SettingEntry(Settings, Settings.version));
 		}
 
 		Rect rect = new(0f, listing.CurHeight, listing.ColumnWidth, listing.listingRect.height - listing.CurHeight);
@@ -113,6 +118,8 @@ internal class ShowHairMod : Mod
 
 internal class Settings : ModSettings
 {
+	internal static readonly Version latestVersion = new(1, 1, 0);
+	internal Version version = latestVersion;
 	private readonly ConcurrentDictionary<ThingDef, Dictionary<ulong, (HatEnum, bool)>> cachedHatStates = new();
 
 	private HairSelectorUI? hairSelectorUI;
@@ -134,15 +141,18 @@ internal class Settings : ModSettings
 	{
 		cachedHatStates.Clear();
 	}
-	
+
 	internal IEnumerable<HatConditionFlagDef> GetEnabledConditions()
 	{
-		return DefDatabase<HatConditionFlagDef>.AllDefs.Where(def => def != HatConditionFlagDefOf.None && settingEntries.Any(entry => (def & (entry.conditions | entry.notConditions)) > HatConditionFlagDefOf.None));
+		return DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
+			def != HatConditionFlagDefOf.None && settingEntries.Any(entry =>
+				(def & (entry.Conditions | entry.NotConditions)) > HatConditionFlagDefOf.None));
 	}
 
 	internal HatEnum GetHatState(ulong flags, ThingDef hat)
 	{
-		Dictionary<ulong, (HatEnum, bool)> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
+		Dictionary<ulong, (HatEnum, bool)> hatState =
+			cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
 
 		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item1;
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
@@ -153,10 +163,11 @@ internal class Settings : ModSettings
 
 		return hatTuple.Item1;
 	}
-	
+
 	internal bool GetHatDontShaveHead(ulong flags, ThingDef hat)
 	{
-		Dictionary<ulong, (HatEnum, bool)> hatState = cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
+		Dictionary<ulong, (HatEnum, bool)> hatState =
+			cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
 
 		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item2;
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
@@ -199,19 +210,40 @@ internal class Settings : ModSettings
 	public override void ExposeData()
 	{
 		base.ExposeData();
-		if (Scribe.mode == LoadSaveMode.Saving)
+
+		Scribe_Values.Look(ref version, "version", latestVersion, true);
+		if (Scribe.mode == LoadSaveMode.LoadingVars)
 		{
-			hairDefNames = HairSelectorUI.enabledDefs.Select(hat => hat.defName).ToHashSet();
+			GetVersion();
 		}
 
 		Scribe_Values.Look(ref onlyApplyToColonists, "OnlyApplyToColonists");
 		Scribe_Values.Look(ref useDontShaveHead, "UseDontShaveHead", true);
 		Scribe_Collections.Look(ref hairDefNames, "hairDefNames", LookMode.Value);
-		Scribe_Collections.Look(ref settingEntries, "settingEntries", LookMode.Deep);
-		if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
-		foreach (SettingEntry settingEntry in settingEntries)
+		Scribe_Collections.Look(ref settingEntries, "settingEntries", LookMode.Deep, this, version);
+		if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 		{
-			settingEntry.settings = this;
+			version = latestVersion;
+		}
+
+		return;
+
+		void GetVersion()
+		{
+			if (version != latestVersion)
+			{
+				return;
+			}
+
+			XmlNodeList? childNodes = Scribe.loader.curXmlParent["settingEntries"]?.ChildNodes;
+			if (childNodes == null) return;
+			foreach (XmlNode node in childNodes)
+			{
+				if (node["conditions"] != null || node["notConditions"] != null)
+				{
+					version = new Version(1, 0, 0);
+				}
+			}
 		}
 	}
 }
@@ -219,20 +251,21 @@ internal class Settings : ModSettings
 internal class SettingEntryDialog : Window
 {
 	private static readonly ThingFilter parentFilter;
+	private float viewHeight;
+	private Vector2 scrollPosition = new(0f, 0f);
 
 	static SettingEntryDialog()
 	{
-		parentFilter = new ThingFilter
+		parentFilter = new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot)
 		{
 			allowedHitPointsConfigurable = false,
 			allowedQualitiesConfigurable = false,
 			hiddenSpecialFilters = DefDatabase<SpecialThingFilterDef>.AllDefsListForReading
 		};
-		parentFilter.SetDisallowAll();
-		foreach (ThingDef hat in DefDatabase<ThingDef>.AllDefs.Where(def => Utils.IsHeadwear(def.apparel)))
-		{
-			parentFilter.SetAllow(hat, true);
-		}
+		parentFilter.SetAllow(ThingCategoryDefOf.NGXYZ_HatRoot, true);
+		parentFilter.SetAllow(DefDatabase<ThingDef>.GetNamed("VFEP_WarcasketHelmet_Warcasket"), true);
+		Log.Message(string.Join(", ",
+			DefDatabase<ThingDef>.GetNamed("VFEP_WarcasketHelmet_Warcasket").thingCategories));
 	}
 
 	public override Vector2 InitialSize => new(900f, 700f);
@@ -253,13 +286,32 @@ internal class SettingEntryDialog : Window
 		Rect inRect2 = new(0f, 40f, inRect.width, inRect.height - 40 - CloseButSize.y);
 		Listing_Standard listing = new() { ColumnWidth = (inRect2.width - 34f) / 3f };
 		listing.Begin(inRect2);
-		Listing_Standard section = listing.BeginSection(400, 3, 3);
+		Listing_Standard section = listing.BeginSection(listing.listingRect.height - listing.CurHeight - 6, 3, 3);
 		Rect rect = section.GetRect(24f);
+		if (Mouse.IsOver(rect))
+		{
+			Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y),
+				Text.CalcSize("ShowHair.AnyAllTooltip".Translate().TrimMultiline()));
+			r.xMax += 20;
+			r.yMax += 20;
+			Find.WindowStack.ImmediateWindow(739160518, r, WindowLayer.Super, delegate
+			{
+				Rect rect5 = r.AtZero();
+				rect5.x += 10;
+				rect5.y += 10;
+				Widgets.Label(rect5, "ShowHair.AnyAllTooltip".Translate().TrimMultiline());
+			});
+		}
+
+		Color color = GUI.color;
+		GUI.color = Color.green;
 		if (Widgets.ButtonText(new Rect(rect.x, rect.y, rect.width / 2f - 1.5f, rect.height),
 			    $"ShowHair.{settingsEntry.mode}".Translate()))
 		{
 			settingsEntry.mode = settingsEntry.mode == "any" ? "all" : "any";
 		}
+
+		GUI.color = Color.red;
 
 		if (Widgets.ButtonText(new Rect(rect.x + rect.width / 2f + 1.5f, rect.y, rect.width / 2f - 1.5f, rect.height),
 			    $"ShowHair.{settingsEntry.notMode}".Translate()))
@@ -268,23 +320,29 @@ internal class SettingEntryDialog : Window
 				settingsEntry.notMode == "any" ? "all" : "any";
 		}
 
+		GUI.color = color;
+
 		Text.Anchor = TextAnchor.MiddleLeft;
+
+		Rect rect2 = new(0f, section.CurHeight, section.ColumnWidth, section.listingRect.height - section.CurHeight);
+		Rect rect3 = new(0f, 0f, rect2.width - 16, viewHeight);
+		Widgets.BeginScrollView(rect2, ref scrollPosition, rect3);
+		float num = 0f;
 		foreach (HatConditionFlagDef flag in DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
 			         def != HatConditionFlagDefOf.None))
 		{
-			Rect rect2 = section.GetRect(20f);
-			rect2.xMin += 13f;
-			rect2.xMax -= 13f;
-			Widgets.DrawHighlightIfMouseover(rect2);
-			rect2.yMax += 5f;
-			rect2.yMin -= 5f;
-			Widgets.Label(rect2, flag.label);
+			Rect rect4 = new(rect3.x, rect3.y + num, rect3.width, 20);
+			rect4.xMin += 16f;
+			Widgets.DrawHighlightIfMouseover(rect4);
+			rect4.yMax += 5f;
+			rect4.yMin -= 5f;
+			Widgets.Label(rect4, flag.label);
 			MultiCheckboxState state;
-			if ((settingsEntry.conditions & flag) > 0)
+			if ((settingsEntry.Conditions & flag) > 0)
 			{
 				state = MultiCheckboxState.On;
 			}
-			else if ((settingsEntry.notConditions & flag) > 0)
+			else if ((settingsEntry.NotConditions & flag) > 0)
 			{
 				state = MultiCheckboxState.Off;
 			}
@@ -294,33 +352,58 @@ internal class SettingEntryDialog : Window
 			}
 
 			MultiCheckboxState newState =
-				CustomWidgets.CheckboxMulti(new Rect(section.ColumnWidth - 42f, section.curY - 20, 20, 20), state);
+				CustomWidgets.CheckboxMulti(new Rect(rect4.x + rect4.width - 26f, rect4.y + 5, 20, 20), state);
 			if (newState != state)
 			{
 				switch (newState)
 				{
 					case MultiCheckboxState.Off:
-						settingsEntry.conditions &= ~flag;
-						settingsEntry.notConditions |= flag;
+						settingsEntry.Conditions &= ~flag;
+						settingsEntry.NotConditions |= flag;
 						break;
 					case MultiCheckboxState.On:
-						settingsEntry.conditions |= flag;
-						settingsEntry.notConditions &= ~flag;
+						settingsEntry.Conditions |= flag;
+						settingsEntry.NotConditions &= ~flag;
 						break;
 					case MultiCheckboxState.Partial:
-						settingsEntry.conditions &= ~flag;
-						settingsEntry.notConditions &= ~flag;
+						settingsEntry.Conditions &= ~flag;
+						settingsEntry.NotConditions &= ~flag;
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
 			}
+
+			num += 20;
 		}
+
+		if (Event.current.type == EventType.Layout)
+		{
+			viewHeight = num;
+		}
+
+		Widgets.EndScrollView();
 
 		Text.Anchor = TextAnchor.UpperLeft;
 		section.End();
 		listing.NewColumn();
-		Widgets.Dropdown(listing.GetRect(24f), settingsEntry, entry => entry.hatState,
+		Rect rectDropdown = listing.GetRect(24f);
+		if (Find.WindowStack.FloatMenu == null && Mouse.IsOver(rectDropdown))
+		{
+			Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y),
+				Text.CalcSize("ShowHair.DropdownTooltip".Translate().TrimMultiline()));
+			r.xMax += 20;
+			r.yMax += 20;
+			Find.WindowStack.ImmediateWindow(-2122180146, r, WindowLayer.Super, delegate
+			{
+				Rect rect5 = r.AtZero();
+				rect5.x += 10;
+				rect5.y += 10;
+				Widgets.Label(rect5, "ShowHair.DropdownTooltip".Translate().TrimMultiline());
+			});
+		}
+
+		Widgets.Dropdown(rectDropdown, settingsEntry, entry => entry.hatState,
 			_ => Enum.GetValues(typeof(HatEnum)).Cast<HatEnum>().Select(hatEnum =>
 				new Widgets.DropdownMenuElement<HatEnum>
 				{
@@ -339,66 +422,93 @@ internal class SettingEntryDialog : Window
 
 internal class SettingEntry : IExposable
 {
-	private bool initialized;
 	private HashSet<string> hatDefNames = [];
-	internal Settings? settings;
-	internal ulong conditions;
+	private readonly Settings settings;
+	private Version version;
+	private ulong? conditions;
+	private HashSet<string> conditionDefNames = [];
 	internal string mode = "any";
-	internal ulong notConditions;
+	private HashSet<string> notConditionDefNames = [];
+	private ulong? notConditions;
 	internal string notMode = "any";
 	internal HatEnum hatState;
 	internal bool useDontShaveHead = true;
+	private ThingFilter? hats;
 
 	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
 		if (!Hats.allowedDefs.Contains(hat)) return false;
-		if (conditions > HatConditionFlagDefOf.None)
+		if (Conditions > HatConditionFlagDefOf.None)
 		{
 			switch (mode)
 			{
-				case "any" when (pawnConditions & conditions) == HatConditionFlagDefOf.None:
-				case "all" when (pawnConditions & conditions) != conditions:
+				case "any" when (pawnConditions & Conditions) == HatConditionFlagDefOf.None:
+				case "all" when (pawnConditions & Conditions) != Conditions:
 					return false;
 			}
 		}
 
-		if (notConditions == HatConditionFlagDefOf.None) return true;
+		if (NotConditions == HatConditionFlagDefOf.None) return true;
 		switch (notMode)
 		{
-			case "any" when (pawnConditions & notConditions) > HatConditionFlagDefOf.None:
-			case "all" when (pawnConditions & notConditions) == conditions:
+			case "any" when (pawnConditions & NotConditions) > HatConditionFlagDefOf.None:
+			case "all" when (pawnConditions & NotConditions) == Conditions:
 				return false;
 		}
 
 		return true;
 	}
 
-	internal ThingFilter Hats
+	internal ulong Conditions
 	{
 		get
 		{
-			if (initialized) return field;
-			field.allowedDefs = hatDefNames.Select(defName => DefDatabase<ThingDef>.defsByName[defName])
-				.ToHashSet();
-			initialized = true;
-			return field;
+			if (conditions.HasValue)
+				return conditions.Value;
+			if (version != Settings.latestVersion)
+				ConvertToLatestVersion();
+			conditions = conditionDefNames.Select(DefDatabase<HatConditionFlagDef>.GetNamedSilentFail)
+				.Where(def => def != null)
+				.Aggregate<HatConditionFlagDef, ulong>(HatConditionFlagDefOf.None, (current, def) => current | def);
+			return conditions.Value;
 		}
-	} = new();
-
-	internal SettingEntry(Settings settings)
-	{
-		this.settings = settings;
+		set => conditions = value;
 	}
 
-	internal SettingEntry()
+	internal ulong NotConditions
 	{
+		get
+		{
+			if (notConditions.HasValue)
+				return notConditions.Value;
+			if (version != Settings.latestVersion)
+				ConvertToLatestVersion();
+
+			notConditions = notConditionDefNames.Select(DefDatabase<HatConditionFlagDef>.GetNamedSilentFail)
+				.Where(def => def != null)
+				.Aggregate<HatConditionFlagDef, ulong>(HatConditionFlagDefOf.None, (current, def) => current | def);
+			return notConditions.Value;
+		}
+		set => notConditions = value;
+	}
+
+	internal ThingFilter Hats =>
+		hats ??= new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot)
+		{
+			allowedDefs = hatDefNames.Select(DefDatabase<ThingDef>.GetNamedSilentFail).Where(def => def != null)
+				.ToHashSet()
+		};
+
+	internal SettingEntry(Settings settings, Version version)
+	{
+		this.settings = settings;
+		this.version = version;
 	}
 
 	internal Rect DoInterface(float x, float y, float width, int index)
 	{
 		if (settings is null)
 		{
-			Log.Error("Settings on SettingEntry is null.");
 			throw new ArgumentNullException();
 		}
 
@@ -431,11 +541,11 @@ internal class SettingEntry : IExposable
 
 		string conditionList = string.Join(", ",
 			DefDatabase<HatConditionFlagDef>.AllDefs
-				.Where(def => (def & conditions) > HatConditionFlagDefOf.None)
+				.Where(def => (def & Conditions) > HatConditionFlagDefOf.None)
 				.Select(def => def.label.Colorize(Color.green)));
 		string notConditionList = string.Join(", ",
 			DefDatabase<HatConditionFlagDef>.AllDefs
-				.Where(def => (def & notConditions) > HatConditionFlagDefOf.None)
+				.Where(def => (def & NotConditions) > HatConditionFlagDefOf.None)
 				.Select(def => def.label.Colorize(Color.red)));
 
 		Text.Anchor = TextAnchor.UpperRight;
@@ -463,7 +573,7 @@ internal class SettingEntry : IExposable
 		}
 
 		const float iconSize = 20f;
-		
+
 		Rect rect5 = new(widgetRow.LeftX(widgetRow.FinalX - 28f), 29f, widgetRow.FinalX - 28f, 26f);
 		size = Text.CalcSize("...").x;
 		size += (rect5.width - size) % iconSize;
@@ -480,11 +590,45 @@ internal class SettingEntry : IExposable
 				Text.Anchor = TextAnchor.UpperLeft;
 				break;
 			}
+
 			Widgets.DefIcon(new Rect(rect5.x + index2 * iconSize, rect5.yMax - iconSize, iconSize, iconSize), def);
 			index2++;
 		}
+
 		Widgets.EndGroup();
 		return rect;
+	}
+
+	private ulong conditionsOld;
+	private ulong notConditionsOld;
+
+	private void ConvertToLatestVersion()
+	{
+		if (version == new Version(1, 0, 0))
+		{
+			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
+			{
+				ulong mask = def;
+				if (!ModsConfig.royaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
+				{
+					mask <<= 1;
+				}
+
+				return (mask & conditionsOld) > HatConditionFlagDefOf.None;
+			}).Select(def => def.defName).ToHashSet();
+			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
+			{
+				ulong mask = def;
+				if (!ModsConfig.royaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
+				{
+					mask <<= 1;
+				}
+
+				return (mask & notConditionsOld) > HatConditionFlagDefOf.None;
+			}).Select(def => def.defName).ToHashSet();
+		}
+
+		version = Settings.latestVersion;
 	}
 
 	public void ExposeData()
@@ -492,14 +636,23 @@ internal class SettingEntry : IExposable
 		if (Scribe.mode == LoadSaveMode.Saving)
 		{
 			hatDefNames = Hats.allowedDefs.Select(hat => hat.defName).ToHashSet();
+			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
+				.Where(def => (Conditions & def) > HatConditionFlagDefOf.None).Select(def => def.defName).ToHashSet();
+			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
+				.Where(def => (NotConditions & def) > HatConditionFlagDefOf.None).Select(def => def.defName)
+				.ToHashSet();
 		}
 
-		Scribe_Values.Look(ref conditions, "conditions");
+		Scribe_Collections.Look(ref conditionDefNames, "conditionDefNames", LookMode.Value);
 		Scribe_Values.Look(ref mode, "mode", "any");
-		Scribe_Values.Look(ref notConditions, "notConditions");
+		Scribe_Collections.Look(ref notConditionDefNames, "notConditionDefNames", LookMode.Value);
 		Scribe_Values.Look(ref notMode, "notMode", "any");
 		Scribe_Values.Look(ref hatState, "hatState");
 		Scribe_Collections.Look(ref hatDefNames, "hatDefNames", LookMode.Value);
 		Scribe_Values.Look(ref useDontShaveHead, "useDontShaveHead", true);
+		if (version == Settings.latestVersion) return;
+		if (Scribe.mode != LoadSaveMode.LoadingVars) return;
+		Scribe_Values.Look(ref conditionsOld, "conditions");
+		Scribe_Values.Look(ref notConditionsOld, "notConditions");
 	}
 }

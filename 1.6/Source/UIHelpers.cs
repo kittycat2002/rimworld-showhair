@@ -34,7 +34,6 @@ internal static class CustomThingFilterUI
 		state.quickSearch.OnGUI(rect3);
 		rect.yMin = rect3.yMax + 3f;
 		TreeNode_ThingCategory treeNodeThingCategory = filter.RootNode;
-
 		rect.xMax -= 4f;
 		rect.yMax -= 6f;
 		Rect rect4 = new(0f, 0f, rect.width - 16f, viewHeight);
@@ -327,7 +326,7 @@ internal class Listing_HatTree(ThingFilter filter, ThingFilter parentFilter, Cus
 
 	private bool Visible(ThingDef td)
 	{
-		return td is { PlayerAcquirable: true, virtualDefParent: null } && parentFilter.Allows(td) &&
+		return parentFilter.Allows(td) &&
 		       !parentFilter.IsAlwaysDisallowedDueToSpecialFilters(td);
 	}
 
@@ -390,30 +389,115 @@ internal static class CustomWidgets
 			_ => Widgets.CheckboxPartialTex
 		};
 		MouseoverSounds.DoRegion(rect);
-		MultiCheckboxState multiCheckboxState = state switch
-		{
-			MultiCheckboxState.On => MultiCheckboxState.Off,
-			MultiCheckboxState.Off => MultiCheckboxState.Partial,
-			_ => MultiCheckboxState.On
-		};
 		bool flag = false;
-		Widgets.DraggableResult draggableResult = Widgets.ButtonImageDraggable(rect, texture2D);
+		(Widgets.DraggableResult draggableResult, int mouseButton) = ButtonImageDraggable(rect, texture2D);
 		if (draggableResult.AnyPressed())
 		{
 			flag = true;
 		}
 
 		if (!flag) return state;
-		if (multiCheckboxState == MultiCheckboxState.On)
+		MultiCheckboxState multiCheckboxState = mouseButton switch
 		{
-			SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera();
-		}
-		else
+			0 => state switch
+			{
+				MultiCheckboxState.On => MultiCheckboxState.Off,
+				MultiCheckboxState.Off => MultiCheckboxState.Partial,
+				_ => MultiCheckboxState.On
+			},
+			1 => state switch
+			{
+				MultiCheckboxState.On => MultiCheckboxState.Partial,
+				MultiCheckboxState.Off => MultiCheckboxState.On,
+				_ => MultiCheckboxState.Off
+			},
+			_ => MultiCheckboxState.Partial
+		};
+
+		switch (multiCheckboxState)
 		{
-			SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera();
+			case MultiCheckboxState.On:
+				SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera();
+				break;
+			case MultiCheckboxState.Off:
+			default:
+				SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera();
+				break;
 		}
 
 		return multiCheckboxState;
+	}
+
+	private static int lastButton = -1;
+
+	private static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonImageDraggable(Rect butRect,
+		Texture2D tex)
+	{
+		return ButtonImageDraggable(butRect, tex, Color.white);
+	}
+
+	public static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonImageDraggable(Rect butRect,
+		Texture2D tex, Color baseColor)
+	{
+		return ButtonImageDraggable(butRect, tex, baseColor, GenUI.MouseoverColor);
+	}
+
+	private static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonImageDraggable(Rect butRect,
+		Texture2D tex, Color baseColor, Color mouseoverColor)
+	{
+		GUI.color = Mouse.IsOver(butRect) ? mouseoverColor : baseColor;
+
+		GUI.DrawTexture(butRect, tex);
+		GUI.color = baseColor;
+		return ButtonInvisibleDraggableEither(butRect);
+	}
+
+	private static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonInvisibleDraggableEither(
+		Rect butRect, bool doMouseoverSound = false)
+	{
+		if (doMouseoverSound)
+		{
+			MouseoverSounds.DoRegion(butRect);
+		}
+
+		int controlID = GUIUtility.GetControlID(FocusType.Passive, butRect);
+		if ((Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1)) && Mouse.IsOver(butRect))
+		{
+			GUIUtility.keyboardControl = 0;
+			Widgets.buttonInvisibleDraggable_activeControl = controlID;
+			Widgets.buttonInvisibleDraggable_mouseStart = Input.mousePosition;
+			Widgets.buttonInvisibleDraggable_dragged = false;
+			lastButton = Input.GetMouseButtonDown(0) ? 0 : Input.GetMouseButtonDown(1) ? 1 : -1;
+		}
+
+		if (Widgets.buttonInvisibleDraggable_activeControl != controlID) return (Widgets.DraggableResult.Idle, lastButton);
+		if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonDown(1))
+		{
+			Widgets.buttonInvisibleDraggable_activeControl = 0;
+			if (!Mouse.IsOver(butRect))
+			{
+				return (Widgets.DraggableResult.Idle, lastButton);
+			}
+
+			return !Widgets.buttonInvisibleDraggable_dragged
+				? (Widgets.DraggableResult.Pressed, lastButton)
+				: (Widgets.DraggableResult.DraggedThenPressed, lastButton);
+		}
+		else
+		{
+			if (!Input.GetMouseButton(0) && !Input.GetMouseButtonDown(1))
+			{
+				Widgets.buttonInvisibleDraggable_activeControl = 0;
+				return (Widgets.DraggableResult.Idle, lastButton);
+			}
+
+			if (Widgets.buttonInvisibleDraggable_dragged ||
+			    !((Widgets.buttonInvisibleDraggable_mouseStart - Input.mousePosition).sqrMagnitude >
+			      Widgets.DragStartDistanceSquared)) return (Widgets.DraggableResult.Idle, 0);
+			Widgets.buttonInvisibleDraggable_dragged = true;
+			return (Widgets.DraggableResult.Dragged, lastButton);
+		}
+
 	}
 }
 
@@ -583,7 +667,7 @@ internal class HairSelectorUI
 			hover = hair;
 			Rect r = new(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y, 100f,
 				100f + Text.LineHeight);
-			Find.WindowStack.ImmediateWindow(12918217, r, WindowLayer.Super, delegate
+			Find.WindowStack.ImmediateWindow(1772638106, r, WindowLayer.Super, delegate
 			{
 				Rect rect5 = r.AtZero();
 				rect5.height -= Text.LineHeight;

@@ -24,7 +24,7 @@ public abstract class HatConditionWorkerCached : HatConditionWorker
 
 	public sealed override bool ConditionIsMet(Pawn pawn)
 	{
-		if (!pawn.RaceProps.Humanlike || !pawn.SpawnedOrAnyParentSpawned || (ShowHairMod.Settings.onlyApplyToColonists && !pawn.Faction.IsPlayerSafe())) return false;
+		if (!pawn.SpawnedOrAnyParentSpawned || (ShowHairMod.Settings.onlyApplyToColonists && !pawn.Faction.IsPlayerSafe())) return false;
 		CacheEntry cacheEntry = Utils.pawnCache.GetOrAdd(pawn.thingIDNumber, new CacheEntry());
 		if (cacheEntry.conditionWorkers.TryGetValue(GetType(), out (int, bool) condition))
 		{
@@ -43,20 +43,20 @@ public abstract class HatConditionWorkerCached : HatConditionWorker
 
 public class HatConditionWorkerIndoors : HatConditionWorkerCached
 {
-	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().OpenRoofCountStopAt(1) == 0;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom()?.OpenRoofCountStopAt(1) == 0;
 }
 
 public class HatConditionWorkerInHomeArea : HatConditionWorkerCached
 {
-	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.MapHeld.areaManager.Home[pawn.PositionHeld];
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.MapHeld?.areaManager.Home[pawn.PositionHeld] ?? false;
 }
 
 public class HatConditionWorkerMeditating : HatConditionWorkerCached
 {
-	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.psychicEntropy.IsCurrentlyMeditating;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.psychicEntropy?.IsCurrentlyMeditating ?? false;
 }
 
 public class HatConditionWorkerIsInVacuum : HatConditionWorkerCached
 {
-	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom().Vacuum > 0f;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom()?.Vacuum > 0f;
 }

@@ -41,10 +41,11 @@ internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 		if (!hatStateParms.enabled) return true;
 		bool hasHat = false;
 		foreach (Apparel apparel in parms.pawn.apparel.WornApparel.Where(apparel =>
-			         Utils.IsHeadwear(apparel.def.apparel)))
+			         apparel.def.apparel.IsHeadwear()))
 		{
 			switch (ShowHairMod.Settings.GetHatState(hatStateParms.flags, apparel.def))
 			{
+				case HatEnum.HidesHairShowsBeard:
 				case HatEnum.HidesAllHair:
 					return false;
 				case HatEnum.ShowsHair:
@@ -57,6 +58,32 @@ internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 		{
 			return parms.pawn.story != null &&
 			       !ShowHairMod.Settings.HairSelectorUI.enabledDefs.Contains(parms.pawn.story.hairDef);
+		}
+
+		return true;
+	}
+}
+
+internal class PawnRenderSubWorkerBeard : PawnRenderSubWorker
+{
+	public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)
+	{
+		if (parms.pawn.apparel == null || !PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(parms)) return true;
+		if (!Utils.pawnCache.TryGetValue(parms.pawn.thingIDNumber, out CacheEntry cacheEntry) ||
+		    !cacheEntry.hatStateParms.HasValue) return true;
+		HatStateParms hatStateParms = cacheEntry.hatStateParms.Value;
+		if (!hatStateParms.enabled) return true;
+		foreach (Apparel apparel in parms.pawn.apparel.WornApparel.Where(apparel =>
+			         apparel.def.apparel.IsHeadwear()))
+		{
+			switch (ShowHairMod.Settings.GetHatState(hatStateParms.flags, apparel.def))
+			{
+				case HatEnum.ShowsHairHidesBeard:
+				case HatEnum.HidesAllHair:
+					return false;
+				case HatEnum.ShowsHair:
+					break;
+			}
 		}
 
 		return true;

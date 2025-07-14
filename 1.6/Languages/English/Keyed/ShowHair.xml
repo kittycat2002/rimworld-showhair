@@ -1,16 +1,28 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<LanguageData>
-	<ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
-	<ShowHair.OnlyApplyToColonists>Only Apply to Colonists</ShowHair.OnlyApplyToColonists>
-	<ShowHair.HideHat>Hide Hat</ShowHair.HideHat>
-	<ShowHair.ShowsHair>Show Hair</ShowHair.ShowsHair>
-	<ShowHair.HidesAllHair>Hide All Hair</ShowHair.HidesAllHair>
-	<ShowHair.HidesHairShowsBeard>Hide Hair, Show Beard</ShowHair.HidesHairShowsBeard>
-	<ShowHair.ShowsHairHidesBeard>Show Hair, Hide Beard</ShowHair.ShowsHairHidesBeard>
-	<ShowHair.HairThatWillHideHats>Hair That All Hats Will Hide</ShowHair.HairThatWillHideHats>
-	<ShowHair.UseDontShaveHead>Use "Don't Shave Your Hair" hairs</ShowHair.UseDontShaveHead>
-	<ShowHair.all>All</ShowHair.all>
-	<ShowHair.any>Any</ShowHair.any>
-	<ShowHair.Always>Always</ShowHair.Always>
-</LanguageData>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
+<LanguageData>
+    <ShowHair.ShowHair>Show Hair</ShowHair.ShowHair>
+    <ShowHair.OnlyApplyToColonists>Only Apply to Colonists</ShowHair.OnlyApplyToColonists>
+    <ShowHair.HideHat>Hide Hat</ShowHair.HideHat>
+    <ShowHair.ShowsHair>Show Hair</ShowHair.ShowsHair>
+    <ShowHair.HidesAllHair>Hide All Hair</ShowHair.HidesAllHair>
+    <ShowHair.HidesHairShowsBeard>Hide Hair, Show Beard</ShowHair.HidesHairShowsBeard>
+    <ShowHair.ShowsHairHidesBeard>Show Hair, Hide Beard</ShowHair.ShowsHairHidesBeard>
+    <ShowHair.HairThatWillHideHats>Hair That All Hats Will Hide</ShowHair.HairThatWillHideHats>
+    <ShowHair.UseDontShaveHead>Use "Don't Shave Your Hair" hairs</ShowHair.UseDontShaveHead>
+    <ShowHair.all>All</ShowHair.all>
+    <ShowHair.any>Any</ShowHair.any>
+    <ShowHair.Always>Always</ShowHair.Always>
+    <ShowHair.AddSettingEntry>Add Setting Entry</ShowHair.AddSettingEntry>
+    <!--Tooltips-->
+    <ShowHair.AnyAllTooltip>
+        If set to any, at least one condition that is checked must match,
+        if set to all, all conditions that are checked/unchecked must match,
+        yellow conditions are skipped.
+    </ShowHair.AnyAllTooltip>
+    <ShowHair.DropdownTooltip>Determines whether hat, hairs and beards are hidden when conditions match.</ShowHair.DropdownTooltip>
+    <ShowHair.AddSettingEntryTooltip>
+        Setting entries are evaluated from top to bottom,
+        using the display options from the first matching entry.
+    </ShowHair.AddSettingEntryTooltip>
+</LanguageData>

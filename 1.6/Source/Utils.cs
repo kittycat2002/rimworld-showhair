@@ -26,12 +26,22 @@ internal static class Utils
 {
 	internal static readonly ConcurrentDictionary<int, CacheEntry> pawnCache = [];
 
-	internal static IEnumerable<HatConditionFlagDef> ConditionFlagDefsEnabled = ShowHairMod.Settings.GetEnabledConditions();
+	internal static IEnumerable<HatConditionFlagDef> ConditionFlagDefsEnabled =
+		ShowHairMod.Settings.GetEnabledConditions();
+
+	internal static string TrimMultiline(this string str)
+	{
+		return string.Join("\n", str.Trim().Split("\n").Select(str2 => str2.Trim()));
+	}
+
+	internal static string TrimMultiline(this TaggedString str)
+	{
+		return new TaggedString(str.RawText.TrimMultiline());
+	}
 
 	internal static HatStateParms GetHatStateParms(this Pawn pawn)
 	{
-		if (!pawn.RaceProps.Humanlike ||
-		    (ShowHairMod.Settings.onlyApplyToColonists && !pawn.Faction.IsPlayerSafe())) return new HatStateParms();
+		if (ShowHairMod.Settings.onlyApplyToColonists && !pawn.Faction.IsPlayerSafe()) return new HatStateParms();
 		return new HatStateParms(
 			true,
 			ConditionFlagDefsEnabled
@@ -40,7 +50,7 @@ internal static class Utils
 		);
 	}
 
-	internal static bool IsHeadwear(ApparelProperties? apparelProperties)
+	internal static bool IsHeadwear(this ApparelProperties? apparelProperties)
 	{
 		if (apparelProperties is null) return false;
 		ApparelLayerDef lastLayer = apparelProperties.LastLayer;
@@ -62,7 +72,7 @@ internal static class Utils
 		HatStateParms parms = cacheEntry.hatStateParms.Value;
 		return ShowHairMod.Settings.GetHatState(parms.flags, apparel) == HatEnum.HideHat;
 	}
-	
+
 	private static bool UseDontShaveHead(this Pawn pawn, ThingDef apparel)
 	{
 		if (!pawnCache.TryGetValue(pawn.thingIDNumber, out CacheEntry cacheEntry) ||
@@ -75,7 +85,8 @@ internal static class Utils
 	{
 		bool upperHead = false;
 		foreach (Apparel apparel in pawn.apparel.WornApparel.Where(apparel =>
-			         IsHeadwear(apparel.def.apparel) && !pawn.HeadwearHidden(apparel.def) && (!onlyIncludeDontShaveHead || pawn.UseDontShaveHead(apparel.def))))
+			         apparel.def.apparel.IsHeadwear() && !pawn.HeadwearHidden(apparel.def) &&
+			         (!onlyIncludeDontShaveHead || pawn.UseDontShaveHead(apparel.def))))
 		{
 			if (apparel.def.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.FullHead))
 			{

@@ -12,5 +12,6 @@
   <v1.6>
     <li>/</li>
     <li>1.6</li>
+    <li IfModActive="oskarpotocki.vfe.pirates">1.6\ModCompatibility\VFEPirates</li>
   </v1.6>
 </loadFolders>
