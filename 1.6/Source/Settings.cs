@@ -263,9 +263,6 @@ internal class SettingEntryDialog : Window
 			hiddenSpecialFilters = DefDatabase<SpecialThingFilterDef>.AllDefsListForReading
 		};
 		parentFilter.SetAllow(ThingCategoryDefOf.NGXYZ_HatRoot, true);
-		parentFilter.SetAllow(DefDatabase<ThingDef>.GetNamed("VFEP_WarcasketHelmet_Warcasket"), true);
-		Log.Message(string.Join(", ",
-			DefDatabase<ThingDef>.GetNamed("VFEP_WarcasketHelmet_Warcasket").thingCategories));
 	}
 
 	public override Vector2 InitialSize => new(900f, 700f);

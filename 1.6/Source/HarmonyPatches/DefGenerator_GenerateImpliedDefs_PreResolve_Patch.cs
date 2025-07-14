@@ -10,7 +10,6 @@ internal static class DefGenerator_GenerateImpliedDefs_PreResolve_Patch
 {
 	internal static void Postfix(bool hotReload)
 	{
-		Log.Message("test");
 		foreach (ThingCategoryDef thingCategoryDef in
 		         ThingCategoryDefGenerator_Hats.ImpliedThingCategoryDefs(hotReload))
 		{
