@@ -220,7 +220,9 @@ internal class Settings : ModSettings
 		Scribe_Values.Look(ref onlyApplyToColonists, "OnlyApplyToColonists");
 		Scribe_Values.Look(ref useDontShaveHead, "UseDontShaveHead", true);
 		Scribe_Collections.Look(ref hairDefNames, "hairDefNames", LookMode.Value);
+		hairDefNames ??= [];
 		Scribe_Collections.Look(ref settingEntries, "settingEntries", LookMode.Deep, this, version);
+		settingEntries ??= [];
 		if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 		{
 			version = latestVersion;
@@ -641,11 +643,14 @@ internal class SettingEntry : IExposable
 		}
 
 		Scribe_Collections.Look(ref conditionDefNames, "conditionDefNames", LookMode.Value);
+		conditionDefNames ??= [];
 		Scribe_Values.Look(ref mode, "mode", "any");
 		Scribe_Collections.Look(ref notConditionDefNames, "notConditionDefNames", LookMode.Value);
+		notConditionDefNames ??= [];
 		Scribe_Values.Look(ref notMode, "notMode", "any");
 		Scribe_Values.Look(ref hatState, "hatState");
 		Scribe_Collections.Look(ref hatDefNames, "hatDefNames", LookMode.Value);
+        hatDefNames ??= [];
 		Scribe_Values.Look(ref useDontShaveHead, "useDontShaveHead", true);
 		if (version == Settings.latestVersion) return;
 		if (Scribe.mode != LoadSaveMode.LoadingVars) return;
