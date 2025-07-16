@@ -78,7 +78,7 @@ internal class ShowHairMod : Mod
 		listing.CheckboxLabeled("ShowHair.UseDontShaveHead".Translate(), ref Settings.useDontShaveHead);
 		listing.GapLine();
 		Listing_Standard section = new();
-		section.Begin(listing.GetRect(rect.height - listing.CurHeight));
+		section.Begin(listing.GetRect(Mathf.Floor(rect.height - listing.CurHeight)));
 		section.ColumnWidth = (section.listingRect.width - 17f) / 2;
 		DrawSettingEntries(section);
 		section.NewColumn();
