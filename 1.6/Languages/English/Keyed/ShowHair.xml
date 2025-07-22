@@ -16,13 +16,18 @@
     <ShowHair.AddSettingEntry>Add Setting Entry</ShowHair.AddSettingEntry>
     <!--Tooltips-->
     <ShowHair.AnyAllTooltip>
-        If set to any, at least one condition that is checked must match,
-        if set to all, all conditions that are checked/unchecked must match,
-        yellow conditions are skipped.
+        This toggles whether one of the checked/unchecked conditions
+        must match/not match, or if all of them must match/not match
     </ShowHair.AnyAllTooltip>
     <ShowHair.DropdownTooltip>Determines whether hat, hairs and beards are hidden when conditions match.</ShowHair.DropdownTooltip>
     <ShowHair.AddSettingEntryTooltip>
         Setting entries are evaluated from top to bottom,
         using the display options from the first matching entry.
     </ShowHair.AddSettingEntryTooltip>
+    <ShowHair.ConditionsTooltip>
+        If the checkbox is checked, then the condition must be true (e.g. pawn is drafted if drafted is checked) for this entry to apply.
+        If the checkbox is unchecked, then the condition must be false (e.g. pawn is undrafted if drafted is unchecked) for this entry to apply.
+        If the checkbox is yellow, then the condition is not checked for this entry. (e.g. for drafted it will apply whether or not the pawn is drafted.)
+        LEAVE ALL OF THEM YELLOW IF YOU WANT THIS ENTRY TO ALWAYS APPLY.
+    </ShowHair.ConditionsTooltip>
 </LanguageData>

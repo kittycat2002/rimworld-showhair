@@ -91,9 +91,26 @@ internal class ShowHairMod : Mod
 
 	private void DrawSettingEntries(Listing_Standard listing)
 	{
-		if (listing.ButtonText("ShowHair.AddSettingEntry".Translate().TrimMultiline()))
+		Rect buttonRect = listing.GetRect(30f);
+		if (Widgets.ButtonText(buttonRect, "ShowHair.AddSettingEntry".Translate().TrimMultiline()))
 		{
 			Settings.AddEntry(new SettingEntry(Settings, Settings.version));
+		}
+
+		listing.Gap(listing.verticalSpacing);
+		if (Mouse.IsOver(buttonRect))
+		{
+			Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y),
+				Text.CalcSize("ShowHair.AddSettingEntryTooltip".Translate().TrimMultiline()));
+			r.xMax += 20;
+			r.yMax += 20;
+			Find.WindowStack.ImmediateWindow(619002489, r, WindowLayer.Super, delegate
+			{
+				Rect rect5 = r.AtZero();
+				rect5.x += 10;
+				rect5.y += 10;
+				Widgets.Label(rect5, "ShowHair.AddSettingEntryTooltip".Translate().TrimMultiline());
+			});
 		}
 
 		Rect rect = new(0f, listing.CurHeight, listing.ColumnWidth, listing.listingRect.height - listing.CurHeight);
@@ -325,6 +342,21 @@ internal class SettingEntryDialog : Window
 
 		Rect rect2 = new(0f, section.CurHeight, section.ColumnWidth, section.listingRect.height - section.CurHeight);
 		Rect rect3 = new(0f, 0f, rect2.width - 16, viewHeight);
+		if (Mouse.IsOver(rect2))
+		{
+			Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y),
+				Text.CalcSize("ShowHair.ConditionsTooltip".Translate().TrimMultiline()));
+			r.xMax += 20;
+			r.yMax += 20;
+			Find.WindowStack.ImmediateWindow(1461335794, r, WindowLayer.Super, delegate
+			{
+				Rect rect5 = r.AtZero();
+				rect5.x += 10;
+				rect5.y += 10;
+				Widgets.Label(rect5, "ShowHair.ConditionsTooltip".Translate().TrimMultiline());
+			});
+		}
+
 		Widgets.BeginScrollView(rect2, ref scrollPosition, rect3);
 		float num = 0f;
 		foreach (HatConditionFlagDef flag in DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
@@ -650,7 +682,7 @@ internal class SettingEntry : IExposable
 		Scribe_Values.Look(ref notMode, "notMode", "any");
 		Scribe_Values.Look(ref hatState, "hatState");
 		Scribe_Collections.Look(ref hatDefNames, "hatDefNames", LookMode.Value);
-        hatDefNames ??= [];
+		hatDefNames ??= [];
 		Scribe_Values.Look(ref useDontShaveHead, "useDontShaveHead", true);
 		if (version == Settings.latestVersion) return;
 		if (Scribe.mode != LoadSaveMode.LoadingVars) return;
