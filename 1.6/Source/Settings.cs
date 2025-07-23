@@ -172,13 +172,18 @@ internal class Settings : ModSettings
 			cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
 
 		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item1;
+		if (!hat.apparel.IsHeadwear())
+		{
+			hatState.Add(flags, (HatEnum.HidesAllHair, false));
+			return HatEnum.HidesAllHair;
+		}
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
 		if (settingEntry != null)
 		{
 			hatState.Add(flags, (settingEntry.hatState, settingEntry.useDontShaveHead));
 		}
 
-		return hatTuple.Item1;
+		return HatEnum.HideHat;
 	}
 
 	internal bool GetHatDontShaveHead(ulong flags, ThingDef hat)
