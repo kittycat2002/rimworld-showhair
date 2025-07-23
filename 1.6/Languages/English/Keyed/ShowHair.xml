@@ -30,4 +30,5 @@
         If the checkbox is yellow, then the condition is not checked for this entry. (e.g. for drafted it will apply whether or not the pawn is drafted.)
         LEAVE ALL OF THEM YELLOW IF YOU WANT THIS ENTRY TO ALWAYS APPLY.
     </ShowHair.ConditionsTooltip>
+    <ShowHair.PartialDescription>Either</ShowHair.PartialDescription>
 </LanguageData>

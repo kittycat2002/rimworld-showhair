@@ -177,6 +177,7 @@ internal class Settings : ModSettings
 			hatState.Add(flags, (HatEnum.HidesAllHair, false));
 			return HatEnum.HidesAllHair;
 		}
+
 		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
 		if (settingEntry != null)
 		{
@@ -347,20 +348,6 @@ internal class SettingEntryDialog : Window
 
 		Rect rect2 = new(0f, section.CurHeight, section.ColumnWidth, section.listingRect.height - section.CurHeight);
 		Rect rect3 = new(0f, 0f, rect2.width - 16, viewHeight);
-		if (Mouse.IsOver(rect2))
-		{
-			Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y),
-				Text.CalcSize("ShowHair.ConditionsTooltip".Translate().TrimMultiline()));
-			r.xMax += 20;
-			r.yMax += 20;
-			Find.WindowStack.ImmediateWindow(1461335794, r, WindowLayer.Super, delegate
-			{
-				Rect rect5 = r.AtZero();
-				rect5.x += 10;
-				rect5.y += 10;
-				Widgets.Label(rect5, "ShowHair.ConditionsTooltip".Translate().TrimMultiline());
-			});
-		}
 
 		Widgets.BeginScrollView(rect2, ref scrollPosition, rect3);
 		float num = 0f;
@@ -370,6 +357,34 @@ internal class SettingEntryDialog : Window
 			Rect rect4 = new(rect3.x, rect3.y + num, rect3.width, 20);
 			rect4.xMin += 16f;
 			Widgets.DrawHighlightIfMouseover(rect4);
+			if (Mouse.IsOver(rect4))
+			{
+				Vector2 sizeChecked = Text.CalcSize(flag.checkedDescription.TrimMultiline());
+				Vector2 sizeUnchecked = Text.CalcSize(flag.uncheckedDescription.TrimMultiline());
+				Vector2 sizePartial = Text.CalcSize("ShowHair.PartialDescription".Translate().TrimMultiline());
+				Vector2 size = new(Mathf.Max(sizeChecked.x, sizeUnchecked.x, sizePartial.x), sizeChecked.y + sizeUnchecked.y + sizePartial.y);
+				Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y), size);
+				r.xMax += 40;
+				r.yMax += 20;
+				Find.WindowStack.ImmediateWindow(1461335794, r, WindowLayer.Super, delegate
+				{
+					Rect rect5 = r.AtZero();
+					rect5.x += 30;
+					rect5.y += 10;
+					Widgets.Label(rect5, flag.checkedDescription.TrimMultiline());
+					rect5.y += sizeChecked.y;
+					Widgets.Label(rect5, flag.uncheckedDescription.TrimMultiline());
+					rect5.y += sizeUnchecked.y;
+					Widgets.Label(rect5, "ShowHair.PartialDescription".Translate().TrimMultiline());
+					Rect rect6 = new(10f, 10f, 20f, 20f);
+					GUI.DrawTexture(rect6, Widgets.CheckboxOnTex);
+					rect6.y += sizeChecked.y;
+					GUI.DrawTexture(rect6, Widgets.CheckboxOffTex);
+					rect6.y += sizeUnchecked.y;
+					GUI.DrawTexture(rect6, Widgets.CheckboxPartialTex);
+				});
+			}
+
 			rect4.yMax += 5f;
 			rect4.yMin -= 5f;
 			Widgets.Label(rect4, flag.label);

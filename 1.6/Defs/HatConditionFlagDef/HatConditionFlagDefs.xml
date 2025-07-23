@@ -9,35 +9,47 @@
         <defName>InBed</defName>
         <label>In Bed</label>
         <workerClass>ShowHair.HatConditionWorkerInBed</workerClass>
+		<checkedDescription>In bed</checkedDescription>
+		<uncheckedDescription>Not in bed</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>Drafted</defName>
         <label>Drafted</label>
         <workerClass>ShowHair.HatConditionWorkerDrafted</workerClass>
+		<checkedDescription>Drafted</checkedDescription>
+		<uncheckedDescription>Undrafted</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>Indoors</defName>
         <label>Indoors</label>
         <workerClass>ShowHair.HatConditionWorkerIndoors</workerClass>
+		<checkedDescription>Indoors</checkedDescription>
+		<uncheckedDescription>Outdoors</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>InHomeArea</defName>
         <label>In Home Area</label>
         <workerClass>ShowHair.HatConditionWorkerInHomeArea</workerClass>
+		<checkedDescription>In home area</checkedDescription>
+		<uncheckedDescription>Outside home area</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.royalty">
         <defName>Meditating</defName>
         <label>Meditating</label>
         <workerClass>ShowHair.HatConditionWorkerMeditating</workerClass>
+		<checkedDescription>Meditating</checkedDescription>
+		<uncheckedDescription>Not meditating</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.odyssey">
         <defName>InVacuum</defName>
         <label>In Vacuum</label>
         <workerClass>ShowHair.HatConditionWorkerIsInVacuum</workerClass>
+		<checkedDescription>In vacuum</checkedDescription>
+		<uncheckedDescription>In pressurized area</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 </Defs>

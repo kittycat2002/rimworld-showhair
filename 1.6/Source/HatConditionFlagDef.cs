@@ -7,6 +7,9 @@ namespace ShowHair;
 
 public class HatConditionFlagDef : Def
 {
+	public string checkedDescription = "";
+	public string uncheckedDescription = "";
+	
 	public override void PostSetIndices()
 	{
 		FlagDefUtility.SetMaskFromIndex(this, ref mask);
