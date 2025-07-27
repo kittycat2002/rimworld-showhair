@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace ShowHair;
@@ -18,6 +19,8 @@ internal class CacheEntry
 	internal HatStateParms? hatStateParms;
 	internal Graphic_Multi? upperGraphic;
 	internal Graphic_Multi? fullGraphic;
+	internal string hairDef = "";
+	internal Color? hairColor;
 	internal readonly Dictionary<Type, (int, bool)> conditionWorkers = [];
 }
 
