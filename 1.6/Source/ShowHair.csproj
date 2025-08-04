@@ -21,5 +21,4 @@
 			<ExcludeAssets>runtime</ExcludeAssets>
 		</PackageReference>
 	</ItemGroup>
-	<PropertyGroup/>
 </Project>

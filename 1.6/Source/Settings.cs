@@ -24,8 +24,7 @@ public enum HatEnum
 [UsedImplicitly]
 internal class ShowHairMod : Mod
 {
-	private static Settings? settings;
-	internal static Harmony? harmony;
+	private static Settings settings = null!;
 	private Vector2 scrollPositionSettingsEntries = new(0f, 0f);
 	private float viewHeightSettingsEntries = 1000f;
 	private Vector2 scrollPositionHairSection = new(0f, 0f);
@@ -46,14 +45,15 @@ internal class ShowHairMod : Mod
 
 	public ShowHairMod(ModContentPack content) : base(content)
 	{
-		harmony = new Harmony("cat2002.showhair");
-		harmony.PatchCategory("ModInitialization");
 		if (!ParseHelper.HandlesType(typeof(Version)))
 		{
 			ParseHelper.Parsers<Version>.Register(Version.Parse);
 		}
 
 		settings = GetSettings<Settings>();
+
+		Harmony harmony = new("cat2002.showhair");
+		harmony.PatchAll();
 	}
 
 	public override string SettingsCategory()
@@ -64,8 +64,8 @@ internal class ShowHairMod : Mod
 	public override void WriteSettings()
 	{
 		base.WriteSettings();
-		settings?.ClearCache();
-		Utils.ConditionFlagDefsEnabled = settings?.GetEnabledConditions() ?? Utils.ConditionFlagDefsEnabled;
+		settings.ClearCache();
+		Utils.ConditionFlagDefsEnabled = settings.GetEnabledConditions();
 		PortraitsCache.Clear();
 		GlobalTextureAtlasManager.FreeAllRuntimeAtlases();
 	}
@@ -137,7 +137,9 @@ internal class Settings : ModSettings
 {
 	internal static readonly Version latestVersion = new(1, 1, 0);
 	internal Version version = latestVersion;
-	private readonly ConcurrentDictionary<ThingDef, Dictionary<ulong, (HatEnum, bool)>> cachedHatStates = new();
+
+	private readonly ConcurrentDictionary<ThingDef, ConcurrentDictionary<ulong, (HatEnum state, bool dontShave)>>
+		cachedHatStates = new();
 
 	private HairSelectorUI? hairSelectorUI;
 
@@ -166,41 +168,33 @@ internal class Settings : ModSettings
 				(def & (entry.Conditions | entry.NotConditions)) > HatConditionFlagDefOf.None));
 	}
 
-	internal HatEnum GetHatState(ulong flags, ThingDef hat)
+	private (HatEnum state, bool dontShave) GetHatCache(ulong flags, ThingDef hat)
 	{
-		Dictionary<ulong, (HatEnum, bool)> hatState =
-			cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
+		ConcurrentDictionary<ulong, (HatEnum, bool)> hatState =
+			cachedHatStates.GetOrAdd(hat, new ConcurrentDictionary<ulong, (HatEnum, bool)>());
 
-		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item1;
+		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple;
 		if (!hat.apparel.IsHeadwear())
 		{
-			hatState.Add(flags, (HatEnum.HidesAllHair, false));
-			return HatEnum.HidesAllHair;
+			hatTuple = (HatEnum.HidesAllHair, false);
 		}
-
-		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
-		if (settingEntry != null)
+		else
 		{
-			hatState.Add(flags, (settingEntry.hatState, settingEntry.useDontShaveHead));
+			SettingEntry? settingEntry =
+				settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
+			hatTuple = settingEntry != null
+				? (settingEntry.hatState, settingEntry.useDontShaveHead)
+				: (HatEnum.HideHat, false);
 		}
 
-		return HatEnum.HideHat;
+		hatState.TryAdd(flags, hatTuple);
+
+		return hatTuple;
 	}
 
-	internal bool GetHatDontShaveHead(ulong flags, ThingDef hat)
-	{
-		Dictionary<ulong, (HatEnum, bool)> hatState =
-			cachedHatStates.GetOrAdd(hat, new Dictionary<ulong, (HatEnum, bool)>());
+	internal HatEnum GetHatState(ulong flags, ThingDef hat) => GetHatCache(flags, hat).state;
 
-		if (hatState.TryGetValue(flags, out (HatEnum, bool) hatTuple)) return hatTuple.Item2;
-		SettingEntry? settingEntry = settingEntries.FirstOrDefault(settingEntry => settingEntry.Matches(flags, hat));
-		if (settingEntry != null)
-		{
-			hatState.Add(flags, (settingEntry.hatState, settingEntry.useDontShaveHead));
-		}
-
-		return hatTuple.Item2;
-	}
+	internal bool GetHatDontShaveHead(ulong flags, ThingDef hat) => GetHatCache(flags, hat).dontShave;
 
 	internal bool onlyApplyToColonists;
 	internal bool useDontShaveHead = true;
@@ -362,7 +356,8 @@ internal class SettingEntryDialog : Window
 				Vector2 sizeChecked = Text.CalcSize(flag.checkedDescription.TrimMultiline());
 				Vector2 sizeUnchecked = Text.CalcSize(flag.uncheckedDescription.TrimMultiline());
 				Vector2 sizePartial = Text.CalcSize("ShowHair.PartialDescription".Translate().TrimMultiline());
-				Vector2 size = new(Mathf.Max(sizeChecked.x, sizeUnchecked.x, sizePartial.x), sizeChecked.y + sizeUnchecked.y + sizePartial.y);
+				Vector2 size = new(Mathf.Max(sizeChecked.x, sizeUnchecked.x, sizePartial.x),
+					sizeChecked.y + sizeUnchecked.y + sizePartial.y);
 				Rect r = new(new Vector2(UI.MousePositionOnUI.x + 10f, UI.MousePositionOnUIInverted.y), size);
 				r.xMax += 40;
 				r.yMax += 20;

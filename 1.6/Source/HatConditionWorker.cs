@@ -60,3 +60,21 @@ public class HatConditionWorkerIsInVacuum : HatConditionWorkerCached
 {
 	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.GetRoom()?.Vacuum > 0f;
 }
+
+public class HatConditionWorkerIsColonist : HatConditionWorkerCached
+{
+	protected override int CacheExpirationTime => 2500;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.Faction.IsPlayerSafe();
+}
+
+public class HatConditionWorkerIsSlave : HatConditionWorkerCached
+{
+	protected override int CacheExpirationTime => 2500;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.IsSlave;
+}
+
+public class HatConditionWorkerIsPrisoner : HatConditionWorkerCached
+{
+	protected override int CacheExpirationTime => 2500;
+	protected override bool ConditionIsMetCached(Pawn pawn) => pawn.IsPrisoner;
+}

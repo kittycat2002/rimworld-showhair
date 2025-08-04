@@ -1,0 +1,45 @@
+ManifestFileVersion: 0
+CRC: 553394566
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f24c47e663b69f96bf754551f7ef8d27
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f24c47e663b69f96bf754551f7ef8d27
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Mari_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Asuka_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Hikari_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/RimNGE_Rei_full_north.png
+Dependencies: []

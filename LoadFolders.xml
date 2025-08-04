@@ -3,15 +3,23 @@
   <v1.4>
     <li>/</li>
     <li>1.4</li>
+	<li>1.4-1.5</li>
   </v1.4>
   <v1.5>
     <li>/</li>
     <li>1.5</li>
+	<li>1.4-1.5</li>
     <li IfModActive="oskarpotocki.vfe.pirates">1.5\ModCompatibility\VFEPirates</li>
   </v1.5>
   <v1.6>
     <li>/</li>
     <li>1.6</li>
+	<li IfModActive="nackbladinc.rimhair">1.6\ModCompatibility\NackbladIncRimhair</li>
+	<li IfModActive="sumghai.rimnge">1.6\ModCompatibility\RimNGE</li>
+	<li IfModActive="rimsenal.hair">1.6\ModCompatibility\RimsenalHairPack</li>
+	<li IfModActive="spoonshortage.spoonshairmod">1.6\ModCompatibility\SpoonsHairMod</li>
+	<li IfModActive="vanillaexpanded.vhe">1.6\ModCompatibility\VanillaHairExpanded</li>
     <li IfModActive="oskarpotocki.vfe.pirates">1.6\ModCompatibility\VFEPirates</li>
+	<li IfModActive="orion.xevarimhair">1.6\ModCompatibility\XevaRimhair</li>
   </v1.6>
 </loadFolders>

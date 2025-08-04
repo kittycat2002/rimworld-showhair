@@ -9,47 +9,71 @@
         <defName>InBed</defName>
         <label>In Bed</label>
         <workerClass>ShowHair.HatConditionWorkerInBed</workerClass>
-		<checkedDescription>In bed</checkedDescription>
-		<uncheckedDescription>Not in bed</uncheckedDescription>
+        <checkedDescription>In bed</checkedDescription>
+        <uncheckedDescription>Not in bed</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>Drafted</defName>
         <label>Drafted</label>
         <workerClass>ShowHair.HatConditionWorkerDrafted</workerClass>
-		<checkedDescription>Drafted</checkedDescription>
-		<uncheckedDescription>Undrafted</uncheckedDescription>
+        <checkedDescription>Drafted</checkedDescription>
+        <uncheckedDescription>Undrafted</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>Indoors</defName>
         <label>Indoors</label>
         <workerClass>ShowHair.HatConditionWorkerIndoors</workerClass>
-		<checkedDescription>Indoors</checkedDescription>
-		<uncheckedDescription>Outdoors</uncheckedDescription>
+        <checkedDescription>Indoors</checkedDescription>
+        <uncheckedDescription>Outdoors</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef>
         <defName>InHomeArea</defName>
         <label>In Home Area</label>
         <workerClass>ShowHair.HatConditionWorkerInHomeArea</workerClass>
-		<checkedDescription>In home area</checkedDescription>
-		<uncheckedDescription>Outside home area</uncheckedDescription>
+        <checkedDescription>In home area</checkedDescription>
+        <uncheckedDescription>Outside home area</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.royalty">
         <defName>Meditating</defName>
         <label>Meditating</label>
         <workerClass>ShowHair.HatConditionWorkerMeditating</workerClass>
-		<checkedDescription>Meditating</checkedDescription>
-		<uncheckedDescription>Not meditating</uncheckedDescription>
+        <checkedDescription>Meditating</checkedDescription>
+        <uncheckedDescription>Not meditating</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 
     <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.odyssey">
         <defName>InVacuum</defName>
         <label>In Vacuum</label>
         <workerClass>ShowHair.HatConditionWorkerIsInVacuum</workerClass>
-		<checkedDescription>In vacuum</checkedDescription>
-		<uncheckedDescription>In pressurized area</uncheckedDescription>
+        <checkedDescription>In vacuum</checkedDescription>
+        <uncheckedDescription>In pressurized area</uncheckedDescription>
+    </ShowHair.HatConditionFlagDef>
+
+    <ShowHair.HatConditionFlagDef>
+        <defName>IsColonist</defName>
+        <label>Is Colony Faction</label>
+        <workerClass>ShowHair.HatConditionWorkerIsColonist</workerClass>
+        <checkedDescription>Is Colony Faction (this includes slaves)</checkedDescription>
+        <uncheckedDescription>Is not Colony Faction (this includes slaves)</uncheckedDescription>
+    </ShowHair.HatConditionFlagDef>
+    
+    <ShowHair.HatConditionFlagDef MayRequire="ludeon.rimworld.ideology">
+        <defName>IsSlave</defName>
+        <label>Is Slave</label>
+        <workerClass>ShowHair.HatConditionWorkerIsSlave</workerClass>
+        <checkedDescription>Is a Slave</checkedDescription>
+        <uncheckedDescription>Is not a Slave</uncheckedDescription>
+    </ShowHair.HatConditionFlagDef>
+    
+    <ShowHair.HatConditionFlagDef>
+        <defName>IsPrisoner</defName>
+        <label>Is Prisoner</label>
+        <workerClass>ShowHair.HatConditionWorkerIsPrisoner</workerClass>
+        <checkedDescription>Is a Prisoner</checkedDescription>
+        <uncheckedDescription>Is not a Prisoner</uncheckedDescription>
     </ShowHair.HatConditionFlagDef>
 </Defs>

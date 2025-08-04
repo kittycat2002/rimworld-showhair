@@ -1,0 +1,105 @@
+ManifestFileVersion: 0
+CRC: 393918824
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 53d2ca32c4160e763b3c5c7035b8a702
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 53d2ca32c4160e763b3c5c7035b8a702
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/ED_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SM_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/MA_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/LT_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/TS_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/VC_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/Xeva_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/SE_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/OA_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/XT_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/KE_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_upper_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/PA_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Hair/CA_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Hair/BA_upper_south.png
+Dependencies: []

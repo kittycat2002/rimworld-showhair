@@ -7,8 +7,8 @@ namespace ShowHair;
 
 public class HatConditionFlagDef : Def
 {
-	public string checkedDescription = "";
-	public string uncheckedDescription = "";
+	[UsedImplicitly] public string checkedDescription = "";
+	[UsedImplicitly] public string uncheckedDescription = "";
 	
 	public override void PostSetIndices()
 	{
