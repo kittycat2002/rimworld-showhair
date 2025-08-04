@@ -38,9 +38,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 			new CodeMatch(OpCodes.Brfalse)
 		);
 		codeMatcher.ThrowIfInvalid("Could not find HeadgearVisible");
-		codeMatcher.DeclareLocal(typeof(CacheEntry), out LocalBuilder cacheEntryVariable);
 		codeMatcher.DeclareLocal(typeof(HatStateParms), out LocalBuilder hatStateParmsVariable);
-		codeMatcher.Advance(1); // Replace with InsertAfter, this is just for Remodder
 		codeMatcher.InsertAfterAndAdvance(
 			CodeInstruction.LoadField(typeof(Utils), nameof(Utils.pawnCache)),
 			CodeInstruction.LoadArgument(0),
@@ -125,9 +123,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 		);
 		codeMatcher.MatchStartForward(new CodeMatch(OpCodes.Stind_I8));
 		codeMatcher.ThrowIfInvalid("Could not find end of RenderSkipFlagDefOf.Hair");
-		codeMatcher.Advance(1);
-		codeMatcher.Labels.Add(label);
-		codeMatcher.Advance(-1);
+		codeMatcher.InstructionAt(1).labels.Add(label);
 
 		codeMatcher.MatchStartForward(
 			new CodeMatch(OpCodes.Ldarg_1),

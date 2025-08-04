@@ -24,15 +24,9 @@ public class Graphic_DontShaveHair : Graphic_Multi
 		array[3] = ContentFinder<Texture2D>.Get($"{req.path}_west", false);
 		if (array[0] == null & array[1] == null && array[2] == null && array[3] == null)
 		{
-#if DEBUG
-			Log.Message($"{req.path} does not have any textures.");
-#endif
 			isDifferentFromMulti = false;
 			return;
 		}
-#if DEBUG
-		Log.Message($"{req.path} has textures.");
-#endif
 		isDifferentFromMulti = true;
 		array[0] ??= ContentFinder<Texture2D>.Get($"{basePath}_north", false);
 		array[1] ??= ContentFinder<Texture2D>.Get($"{basePath}_east", false);
