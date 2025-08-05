@@ -1,11 +1,12 @@
-obj
+_PublisherPlus.xml
+.idea
 .vs
 *.dds
-Thumbs.db
-.idea
 *.DotSettings.user
-_PublisherPlus.xml
-UserSettings
 Library
 Logs
+obj
 Packages
+Temp
+Thumbs.db
+UserSettings

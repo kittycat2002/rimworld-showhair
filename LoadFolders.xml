@@ -14,6 +14,7 @@
   <v1.6>
     <li>/</li>
     <li>1.6</li>
+	<li IfModActive="Ludeon.RimWorld.Royalty">1.6\ModCompatibility\Royalty</li>
 	<li IfModActive="nackbladinc.rimhair">1.6\ModCompatibility\NackbladIncRimhair</li>
 	<li IfModActive="sumghai.rimnge">1.6\ModCompatibility\RimNGE</li>
 	<li IfModActive="rimsenal.hair">1.6\ModCompatibility\RimsenalHairPack</li>

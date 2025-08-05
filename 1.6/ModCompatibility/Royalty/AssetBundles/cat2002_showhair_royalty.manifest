@@ -1,0 +1,27 @@
+ManifestFileVersion: 0
+CRC: 3684627777
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 58ec4ecd5e516ea401fa2fc1b6232f6e
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 58ec4ecd5e516ea401fa2fc1b6232f6e
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_full_south.png
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_upper_north.png
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_upper_south.png
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_full_east.png
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_full_north.png
+- Assets/Data/cat2002.showhair/Textures/Things/Pawn/Humanlike/Hairs/Royalty/Victoria_upper_east.png
+Dependencies: []
