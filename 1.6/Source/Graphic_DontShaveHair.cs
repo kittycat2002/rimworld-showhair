@@ -17,17 +17,26 @@ public class Graphic_DontShaveHair : Graphic_Multi
 		colorTwo = req.colorTwo;
 		drawSize = req.drawSize;
 		string basePath = req.path[..req.path.LastIndexOf("_", StringComparison.Ordinal)];
+		string type = req.path[(req.path.LastIndexOf("_", StringComparison.Ordinal) + 1)..];
 		Texture2D?[] array = new Texture2D?[mats.Length];
 		array[0] = ContentFinder<Texture2D>.Get($"{req.path}_north", false);
 		array[1] = ContentFinder<Texture2D>.Get($"{req.path}_east", false);
 		array[2] = ContentFinder<Texture2D>.Get($"{req.path}_south", false);
 		array[3] = ContentFinder<Texture2D>.Get($"{req.path}_west", false);
+		if (type == "full")
+		{
+			array[0] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_north", false);
+			array[1] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_east", false);
+			array[2] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_south", false);
+			array[3] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_west", false);
+		}
 		if (array[0] == null & array[1] == null && array[2] == null && array[3] == null)
 		{
 			isDifferentFromMulti = false;
 			return;
 		}
 		isDifferentFromMulti = true;
+
 		array[0] ??= ContentFinder<Texture2D>.Get($"{basePath}_north", false);
 		array[1] ??= ContentFinder<Texture2D>.Get($"{basePath}_east", false);
 		array[2] ??= ContentFinder<Texture2D>.Get($"{basePath}_south", false);
