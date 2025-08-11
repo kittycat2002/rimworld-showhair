@@ -151,7 +151,7 @@ internal class Settings : ModSettings
 		{
 			return hairSelectorUI ??= new HairSelectorUI
 			{
-				enabledDefs = hairDefNames.Select(defName => DefDatabase<HairDef>.defsByName[defName]).ToHashSet()
+				enabledDefs = hairDefNames.Select(DefDatabase<HairDef>.GetNamedSilentFail).Where(def => def != null).ToHashSet()
 			};
 		}
 	}
@@ -229,9 +229,14 @@ internal class Settings : ModSettings
 		base.ExposeData();
 
 		Scribe_Values.Look(ref version, "version", latestVersion, true);
-		if (Scribe.mode == LoadSaveMode.LoadingVars)
+		switch (Scribe.mode)
 		{
-			GetVersion();
+			case LoadSaveMode.LoadingVars:
+				GetVersion();
+				break;
+			case LoadSaveMode.Saving:
+				hairDefNames = HairSelectorUI.enabledDefs.Select(def => def.defName).ToHashSet();
+				break;
 		}
 
 		Scribe_Values.Look(ref onlyApplyToColonists, "OnlyApplyToColonists");
