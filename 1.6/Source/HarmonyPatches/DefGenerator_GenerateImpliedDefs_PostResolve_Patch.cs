@@ -7,7 +7,7 @@ namespace ShowHair.HarmonyPatches;
 [HarmonyPatch(typeof(DefGenerator), nameof(DefGenerator.GenerateImpliedDefs_PreResolve))]
 internal static class DefGenerator_GenerateImpliedDefs_PreResolve_Patch
 {
-	internal static void Postfix(bool hotReload)
+	private static void Postfix(bool hotReload)
 	{
 		foreach (ThingCategoryDef thingCategoryDef in
 		         ThingCategoryDefGenerator_Hats.ImpliedThingCategoryDefs(hotReload))

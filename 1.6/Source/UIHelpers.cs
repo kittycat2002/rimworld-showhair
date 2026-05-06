@@ -436,7 +436,7 @@ internal static class CustomWidgets
 		return ButtonImageDraggable(butRect, tex, Color.white);
 	}
 
-	public static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonImageDraggable(Rect butRect,
+	private static (Widgets.DraggableResult draggableResult, int mouseButton) ButtonImageDraggable(Rect butRect,
 		Texture2D tex, Color baseColor)
 	{
 		return ButtonImageDraggable(butRect, tex, baseColor, GenUI.MouseoverColor);
@@ -530,8 +530,13 @@ internal class HairSelectorUI
 	private readonly List<Dialog_EditIdeoStyleItems.ExpandedInfo> expandedInfos;
 	private HairDef? hover;
 	private static readonly Color hairColor = PawnHairColors.ReddishBrown;
-	internal HashSet<HairDef> enabledDefs = [];
+	internal readonly HashSet<HairDef> enabledDefs = [];
 	private readonly Dictionary<string, string> labelCache = new();
+
+	public HairSelectorUI(HashSet<HairDef> enabledDefs) : this()
+	{
+		this.enabledDefs = enabledDefs;
+	}
 
 	internal void DrawSection(Rect rect, ref Vector2 scrollPosition, ref float scrollViewHeight)
 	{

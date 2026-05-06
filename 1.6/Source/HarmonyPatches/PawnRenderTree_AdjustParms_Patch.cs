@@ -95,7 +95,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 			new CodeMatch(OpCodes.Stind_I8)
 		);
 		codeMatcher.ThrowIfInvalid("Could not find end of BodyPartGroupDefOf.UpperHead");
-		codeMatcher.Advance(1);
+		codeMatcher.Advance();
 		codeMatcher.AddLabels([label]);
 
 		codeMatcher.MatchStartForward(
@@ -150,7 +150,7 @@ internal static class PawnRenderTree_AdjustParms_Patch
 		);
 		codeMatcher.MatchStartForward(new CodeMatch(OpCodes.Stind_I8));
 		codeMatcher.ThrowIfInvalid("Could not find end of RenderSkipFlagDefOf.Beard");
-		codeMatcher.Advance(1);
+		codeMatcher.Advance();
 		codeMatcher.Labels.Add(label);
 
 		codeMatcher.MatchStartForward(

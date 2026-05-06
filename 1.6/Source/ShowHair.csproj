@@ -6,19 +6,40 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Nullable>enable</Nullable>
-        <DebugType>embedded</DebugType>
+		<DebugType>embedded</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<Publicize Include="Assembly-CSharp"/>
+		<Publicize Include="Assembly-CSharp:RimWorld.QuickSearchWidget.instanceCounter" />
+		<Publicize Include="Assembly-CSharp:Verse.DraggableResultUtility" />
+		<Publicize Include="Assembly-CSharp:Verse.DynamicPawnRenderNodeSetup_Apparel.ProcessApparel" />
+		<Publicize Include="Assembly-CSharp:Verse.Graphic_Multi.drawRotatedExtraAngleOffset" />
+		<Publicize Include="Assembly-CSharp:Verse.Graphic_Multi.eastFlipped" />
+		<Publicize Include="Assembly-CSharp:Verse.Graphic_Multi.mats" />
+		<Publicize Include="Assembly-CSharp:Verse.Graphic_Multi.westFlipped" />
+		<Publicize Include="Assembly-CSharp:Verse.Listing.curX" />
+		<Publicize Include="Assembly-CSharp:Verse.Listing.listingRect" />
+		<Publicize Include="Assembly-CSharp:Verse.Listing_TreeThingFilter.NoMatchColor" />
+		<Publicize Include="Assembly-CSharp:Verse.PawnRenderTree.AdjustParms" />
+		<Publicize Include="Assembly-CSharp:Verse.Room.OpenRoofCountStopAt" />
+		<Publicize Include="Assembly-CSharp:Verse.ThingFilter.allowedDefs" />
+		<Publicize Include="Assembly-CSharp:Verse.Widgets.buttonInvisibleDraggable_activeControl" />
+		<Publicize Include="Assembly-CSharp:Verse.Widgets.buttonInvisibleDraggable_dragged" />
+		<Publicize Include="Assembly-CSharp:Verse.Widgets.buttonInvisibleDraggable_mouseStart" />
+		<Publicize Include="Assembly-CSharp:Verse.Widgets.DragStartDistanceSquared" />
+		<Publicize Include="Assembly-CSharp:Verse.WidgetRow.LeftX" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*-*" />
-		<PackageReference Include="Lib.Harmony" Version="2.3.6">
-			<ExcludeAssets>runtime</ExcludeAssets>
-		</PackageReference>
+		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4633" />
+		<PackageReference Include="Lib.Harmony.Ref" Version="2.4.2" />
 	</ItemGroup>
+	<PropertyGroup>
+		<Version>2.0.0.0</Version>
+		<AssemblyVersion>2.0.0.0</AssemblyVersion>
+		<AssemblyFileVersion>2.0.0.0</AssemblyFileVersion>
+		<ProductVersion>2.0.0.0</ProductVersion>
+	</PropertyGroup>
 </Project>

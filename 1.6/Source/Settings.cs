@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml;
 using HarmonyLib;
-using JetBrains.Annotations;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -21,27 +21,15 @@ public enum HatEnum
 	ShowsHairHidesBeard
 }
 
-[UsedImplicitly]
 internal class ShowHairMod : Mod
 {
-	private static Settings settings = null!;
+	private static Settings? settings;
 	private Vector2 scrollPositionSettingsEntries = new(0f, 0f);
 	private float viewHeightSettingsEntries = 1000f;
 	private Vector2 scrollPositionHairSection = new(0f, 0f);
 	private float viewHeightHairSection = 1000f;
 
-	internal static Settings Settings
-	{
-		get
-		{
-			if (settings is null)
-			{
-				throw new NullReferenceException();
-			}
-
-			return settings;
-		}
-	}
+	internal static Settings Settings => settings ?? throw new NullReferenceException();
 
 	public ShowHairMod(ModContentPack content) : base(content)
 	{
@@ -64,8 +52,7 @@ internal class ShowHairMod : Mod
 	public override void WriteSettings()
 	{
 		base.WriteSettings();
-		settings.ClearCache();
-		Utils.ConditionFlagDefsEnabled = settings.GetEnabledConditions();
+		Settings.ClearCache();
 		PortraitsCache.Clear();
 		GlobalTextureAtlasManager.FreeAllRuntimeAtlases();
 	}
@@ -141,31 +128,26 @@ internal class Settings : ModSettings
 	private readonly ConcurrentDictionary<ThingDef, ConcurrentDictionary<ulong, (HatEnum state, bool dontShave)>>
 		cachedHatStates = new();
 
-	private HairSelectorUI? hairSelectorUI;
-
 	private HashSet<string> hairDefNames = [];
 
-	internal HairSelectorUI HairSelectorUI
-	{
-		get
-		{
-			return hairSelectorUI ??= new HairSelectorUI
-			{
-				enabledDefs = hairDefNames.Select(DefDatabase<HairDef>.GetNamedSilentFail).Where(def => def != null).ToHashSet()
-			};
-		}
-	}
+	internal HairSelectorUI HairSelectorUI =>
+		field ??= new HairSelectorUI(hairDefNames.Select(DefDatabase<HairDef>.GetNamedSilentFail)
+			.Where(def => def != null).ToHashSet());
 
 	internal void ClearCache()
 	{
 		cachedHatStates.Clear();
+		EnabledConditions = null;
 	}
 
-	internal IEnumerable<HatConditionFlagDef> GetEnabledConditions()
+	[AllowNull]
+	internal HatConditionFlagDef[] EnabledConditions
 	{
-		return DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
-			def != HatConditionFlagDefOf.None && settingEntries.Any(entry =>
-				(def & (entry.Conditions | entry.NotConditions)) > HatConditionFlagDefOf.None));
+		get =>
+			field ??= DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
+				def != HatConditionFlagDefOf.None && settingEntries.Any(entry =>
+					(def & (entry.Conditions | entry.NotConditions)) > HatConditionFlagDefOf.None)).ToArray();
+		set;
 	}
 
 	private (HatEnum state, bool dontShave) GetHatCache(ulong flags, ThingDef hat)
@@ -484,11 +466,10 @@ internal class SettingEntry : IExposable
 	internal string notMode = "any";
 	internal HatEnum hatState;
 	internal bool useDontShaveHead = true;
-	private ThingFilter? hats;
 
 	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
-		if (!Hats.allowedDefs.Contains(hat)) return false;
+		if (!((HashSet<ThingDef>)Hats.AllowedThingDefs).Contains(hat)) return false;
 		if (Conditions > HatConditionFlagDefOf.None)
 		{
 			switch (mode)
@@ -543,12 +524,22 @@ internal class SettingEntry : IExposable
 		set => notConditions = value;
 	}
 
-	internal ThingFilter Hats =>
-		hats ??= new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot)
+	internal ThingFilter Hats
+	{
+		get
 		{
-			allowedDefs = hatDefNames.Select(DefDatabase<ThingDef>.GetNamedSilentFail).Where(def => def != null)
-				.ToHashSet()
-		};
+			if (field is not null) return field;
+			field = new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot);
+			foreach (string hatDefName in hatDefNames)
+			{
+				ThingDef? hatDef = DefDatabase<ThingDef>.GetNamedSilentFail(hatDefName);
+				if (hatDef is null) continue;
+				field.SetAllow(hatDef, true);
+			}
+
+			return field;
+		}
+	}
 
 	internal SettingEntry(Settings settings, Version version)
 	{
@@ -660,7 +651,7 @@ internal class SettingEntry : IExposable
 			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
 			{
 				ulong mask = def;
-				if (!ModsConfig.royaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
+				if (!ModsConfig.RoyaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
 				{
 					mask <<= 1;
 				}
@@ -670,7 +661,7 @@ internal class SettingEntry : IExposable
 			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs.Where(def =>
 			{
 				ulong mask = def;
-				if (!ModsConfig.royaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
+				if (!ModsConfig.RoyaltyActive && mask > HatConditionFlagDefOf.InHomeArea)
 				{
 					mask <<= 1;
 				}
@@ -686,7 +677,7 @@ internal class SettingEntry : IExposable
 	{
 		if (Scribe.mode == LoadSaveMode.Saving)
 		{
-			hatDefNames = Hats.allowedDefs.Select(hat => hat.defName).ToHashSet();
+			hatDefNames = Hats.AllowedThingDefs.Select(hat => hat.defName).ToHashSet();
 			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
 				.Where(def => (Conditions & def) > HatConditionFlagDefOf.None).Select(def => def.defName).ToHashSet();
 			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs

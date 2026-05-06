@@ -25,10 +25,10 @@ public class Graphic_DontShaveHair : Graphic_Multi
 		array[3] = ContentFinder<Texture2D>.Get($"{req.path}_west", false);
 		if (type == "full")
 		{
-			array[0] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_north", false);
-			array[1] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_east", false);
-			array[2] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_south", false);
-			array[3] ??= ContentFinder<Texture2D>.Get($"{basePath}_upper_west", false);
+			array[0] = array[0] ? array[0] : ContentFinder<Texture2D>.Get($"{basePath}_upper_north", false);
+			array[1] = array[1] ? array[1] : ContentFinder<Texture2D>.Get($"{basePath}_upper_east", false);
+			array[2] = array[2] ? array[2] : ContentFinder<Texture2D>.Get($"{basePath}_upper_south", false);
+			array[3] = array[3] ? array[3] : ContentFinder<Texture2D>.Get($"{basePath}_upper_west", false);
 		}
 		if (array[0] == null & array[1] == null && array[2] == null && array[3] == null)
 		{
@@ -37,10 +37,10 @@ public class Graphic_DontShaveHair : Graphic_Multi
 		}
 		isDifferentFromMulti = true;
 
-		array[0] ??= ContentFinder<Texture2D>.Get($"{basePath}_north", false);
-		array[1] ??= ContentFinder<Texture2D>.Get($"{basePath}_east", false);
-		array[2] ??= ContentFinder<Texture2D>.Get($"{basePath}_south", false);
-		array[3] ??= ContentFinder<Texture2D>.Get($"{basePath}_west", false);
+		array[0] = array[0] ? array[0] : ContentFinder<Texture2D>.Get($"{basePath}_north", false);
+		array[1] = array[1] ? array[1] : ContentFinder<Texture2D>.Get($"{basePath}_east", false);
+		array[2] = array[2] ? array[2] : ContentFinder<Texture2D>.Get($"{basePath}_south", false);
+		array[3] = array[3] ? array[3] : ContentFinder<Texture2D>.Get($"{basePath}_west", false);
 		if (array[0] == null)
 		{
 			if (array[2] != null)

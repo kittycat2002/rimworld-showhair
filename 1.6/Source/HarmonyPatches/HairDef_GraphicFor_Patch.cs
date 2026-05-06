@@ -33,18 +33,18 @@ internal static class HairDef_GraphicFor_Patch
 			if (graphics.upper)
 			{
 				cacheEntry.upperGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_DontShaveHair>($"{texPath}_upper",
-					overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
+					overrideShaderTypeDef?.Shader ? overrideShaderTypeDef?.Shader : ShaderDatabase.CutoutHair, Vector2.one, color);
 			}
 			if (graphics.full)
 				cacheEntry.fullGraphic = (Graphic_Multi)GraphicDatabase.Get<Graphic_DontShaveHair>($"{texPath}_full",
-					overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
+					overrideShaderTypeDef?.Shader ? overrideShaderTypeDef?.Shader : ShaderDatabase.CutoutHair, Vector2.one, color);
 		}
 		else
 		{
 			Graphic_DontShaveHair upper = (Graphic_DontShaveHair)GraphicDatabase.Get<Graphic_DontShaveHair>($"{texPath}_upper",
-				overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
+				overrideShaderTypeDef?.Shader ? overrideShaderTypeDef?.Shader : ShaderDatabase.CutoutHair, Vector2.one, color);
 			Graphic_DontShaveHair full = (Graphic_DontShaveHair)GraphicDatabase.Get<Graphic_DontShaveHair>($"{texPath}_full",
-				overrideShaderTypeDef?.Shader ?? ShaderDatabase.CutoutHair, Vector2.one, color);
+				overrideShaderTypeDef?.Shader ? overrideShaderTypeDef?.Shader : ShaderDatabase.CutoutHair, Vector2.one, color);
 			graphicCache[__instance.defName] = (upper.isDifferentFromMulti, full.isDifferentFromMulti);
 			if (upper.isDifferentFromMulti)
 				cacheEntry.upperGraphic = upper;

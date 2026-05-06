@@ -5,10 +5,14 @@ using Verse;
 
 namespace ShowHair;
 
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
 public class HatConditionFlagDef : Def
 {
-	[UsedImplicitly] public string checkedDescription = "";
-	[UsedImplicitly] public string uncheckedDescription = "";
+	[UsedImplicitly(ImplicitUseKindFlags.Assign)] public string checkedDescription = "";
+	[UsedImplicitly(ImplicitUseKindFlags.Assign)] public string uncheckedDescription = "";
+	[UsedImplicitly(ImplicitUseKindFlags.Assign)] public Type workerClass = null!;
+	
+	[Unsaved] private ulong mask;
 	
 	public override void PostSetIndices()
 	{
@@ -22,11 +26,5 @@ public class HatConditionFlagDef : Def
 		return $"{base.ToString()} ({mask})";
 	}
 
-	private ulong mask;
-
-	[UsedImplicitly] public Type? workerClass;
-	
-	private HatConditionWorker? workerInt;
-	
-	public HatConditionWorker Worker => workerInt ??= (HatConditionWorker)Activator.CreateInstance(workerClass ?? throw new NullReferenceException($"Null workerClass in HatConditionFlagDef: {defName}"));
+	public HatConditionWorker Worker => field ??= (HatConditionWorker)Activator.CreateInstance(workerClass ?? throw new NullReferenceException($"Null workerClass in HatConditionFlagDef: {defName}"));
 }

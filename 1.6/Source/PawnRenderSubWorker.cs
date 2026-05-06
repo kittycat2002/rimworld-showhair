@@ -6,7 +6,7 @@ using Verse;
 
 namespace ShowHair;
 
-[UsedImplicitly]
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
 internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 {
 	public override void EditMaterial(PawnRenderNode node, PawnDrawParms parms, ref Material material)
@@ -64,6 +64,7 @@ internal class PawnRenderSubWorkerHair : PawnRenderSubWorker
 	}
 }
 
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
 internal class PawnRenderSubWorkerBeard : PawnRenderSubWorker
 {
 	public override bool CanDrawNowSub(PawnRenderNode node, PawnDrawParms parms)

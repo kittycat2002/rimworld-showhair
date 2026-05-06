@@ -8,14 +8,7 @@ namespace ShowHair.HarmonyPatches;
 [HarmonyPatch]
 internal static class Pawn_Removed_Patch
 {
-	private static IEnumerable<MethodInfo> TargetMethods()
-	{
-		yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.DeSpawn));
-		yield return AccessTools.Method(typeof(Pawn), nameof(Pawn.Destroy));
-	}
+	private static IEnumerable<MethodInfo> TargetMethods() => [AccessTools.Method(typeof(Pawn), nameof(Pawn.DeSpawn)), AccessTools.Method(typeof(Pawn), nameof(Pawn.Destroy))];
 
-	private static void Postfix(Pawn __instance)
-	{
-		Utils.pawnCache.TryRemove(__instance.thingIDNumber, out _);
-	}
+	private static void Postfix(Pawn __instance) => Utils.pawnCache.TryRemove(__instance.thingIDNumber, out _);
 }

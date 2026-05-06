@@ -5,7 +5,7 @@ using Verse;
 
 namespace ShowHair;
 
-public static class DebugActions
+internal static class DebugActions
 {
 	[DebugOutput("Show Hair With Hats")]
 	private static void DontShaveHair()
