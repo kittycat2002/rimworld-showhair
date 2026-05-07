@@ -469,7 +469,7 @@ internal class SettingEntry : IExposable
 
 	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
-		if (!((HashSet<ThingDef>)Hats.AllowedThingDefs).Contains(hat)) return false;
+		if (!Hats.allowedDefs.Contains(hat)) return false;
 		if (Conditions > HatConditionFlagDefOf.None)
 		{
 			switch (mode)
@@ -677,7 +677,7 @@ internal class SettingEntry : IExposable
 	{
 		if (Scribe.mode == LoadSaveMode.Saving)
 		{
-			hatDefNames = Hats.AllowedThingDefs.Select(hat => hat.defName).ToHashSet();
+			hatDefNames = Hats.allowedDefs.Select(hat => hat.defName).ToHashSet();
 			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
 				.Where(def => (Conditions & def) > HatConditionFlagDefOf.None).Select(def => def.defName).ToHashSet();
 			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
