@@ -42,6 +42,8 @@ internal class ShowHairMod : Mod
 
 		Harmony harmony = new("cat2002.showhair");
 		harmony.PatchAll();
+		
+		LongEventHandler.QueueLongEvent(Initialize, "Show Hair With Hats", true, null);
 	}
 
 	public override string SettingsCategory()
@@ -81,7 +83,9 @@ internal class ShowHairMod : Mod
 		Rect buttonRect = listing.GetRect(30f);
 		if (Widgets.ButtonText(buttonRect, "ShowHair.AddSettingEntry".Translate().TrimMultiline()))
 		{
-			Settings.AddEntry(new SettingEntry(Settings, Settings.version));
+			SettingEntry settingEntry = new(Settings, Settings.version);
+			settingEntry.Initialize();
+			Settings.AddEntry(settingEntry);
 		}
 
 		listing.Gap(listing.verticalSpacing);
@@ -117,6 +121,14 @@ internal class ShowHairMod : Mod
 		}
 
 		Widgets.EndScrollView();
+	}
+	
+	internal static void Initialize()
+	{
+		foreach (SettingEntry settingEntry in Settings.settingEntries)
+		{
+			settingEntry.Initialize();
+		}
 	}
 }
 
@@ -448,7 +460,7 @@ internal class SettingEntryDialog : Window
 		listing.CheckboxLabeled($"ShowHair.UseDontShaveHead".Translate(), ref settingsEntry.useDontShaveHead);
 		listing.NewColumn();
 		Rect rect5 = listing.GetRect(listing.listingRect.height - listing.CurHeight);
-		CustomThingFilterUI.DoThingFilterConfigWindow(rect5, thingFilterState, settingsEntry.Hats, parentFilter);
+		CustomThingFilterUI.DoThingFilterConfigWindow(rect5, thingFilterState, settingsEntry.hats, parentFilter);
 		listing.End();
 	}
 }
@@ -467,9 +479,20 @@ internal class SettingEntry : IExposable
 	internal HatEnum hatState;
 	internal bool useDontShaveHead = true;
 
+	internal void Initialize()
+	{
+		hats = new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot);
+		foreach (string hatDefName in hatDefNames)
+		{
+			ThingDef? hatDef = DefDatabase<ThingDef>.GetNamedSilentFail(hatDefName);
+			if (hatDef is null) continue;
+			hats.SetAllow(hatDef, true);
+		}
+	}
+
 	internal bool Matches(ulong pawnConditions, ThingDef hat)
 	{
-		if (!Hats.allowedDefs.Contains(hat)) return false;
+		if (!hats.allowedDefs.Contains(hat)) return false;
 		if (Conditions > HatConditionFlagDefOf.None)
 		{
 			switch (mode)
@@ -524,22 +547,7 @@ internal class SettingEntry : IExposable
 		set => notConditions = value;
 	}
 
-	internal ThingFilter Hats
-	{
-		get
-		{
-			if (field is not null) return field;
-			field = new ThingFilter(ThingCategoryDefOf.NGXYZ_HatRoot);
-			foreach (string hatDefName in hatDefNames)
-			{
-				ThingDef? hatDef = DefDatabase<ThingDef>.GetNamedSilentFail(hatDefName);
-				if (hatDef is null) continue;
-				field.SetAllow(hatDef, true);
-			}
-
-			return field;
-		}
-	}
+	internal ThingFilter hats = null!;
 
 	internal SettingEntry(Settings settings, Version version)
 	{
@@ -623,7 +631,7 @@ internal class SettingEntry : IExposable
 		rect5.xMax -= size;
 		int index2 = 0;
 		int maxCount = (int)(rect5.width / iconSize);
-		foreach (ThingDef def in Hats.AllowedThingDefs)
+		foreach (ThingDef def in hats.allowedDefs)
 		{
 			if (index2 == maxCount)
 			{
@@ -677,7 +685,7 @@ internal class SettingEntry : IExposable
 	{
 		if (Scribe.mode == LoadSaveMode.Saving)
 		{
-			hatDefNames = Hats.allowedDefs.Select(hat => hat.defName).ToHashSet();
+			hatDefNames = hats.allowedDefs.Select(hat => hat.defName).ToHashSet();
 			conditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs
 				.Where(def => (Conditions & def) > HatConditionFlagDefOf.None).Select(def => def.defName).ToHashSet();
 			notConditionDefNames = DefDatabase<HatConditionFlagDef>.AllDefs

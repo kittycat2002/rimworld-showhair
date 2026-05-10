@@ -24,7 +24,6 @@ internal class CacheEntry
 	internal readonly Dictionary<Type, (int, bool)> conditionWorkers = [];
 }
 
-[StaticConstructorOnStartup]
 internal static class Utils
 {
 	internal static readonly ConcurrentDictionary<int, CacheEntry> pawnCache = [];
